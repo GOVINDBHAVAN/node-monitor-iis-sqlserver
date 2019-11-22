@@ -1,0 +1,24 @@
+{
+  "name": "monitor",
+  "version": "1.0.0",
+  "description": "Monitor of IIS requests and SQL Server deadlock",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsc && node dist/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Govind B Fufal",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GOVINDBHAVAN/node-monitor-iis-sqlserver.git"
+  },
+  "dependencies": {
+    "@types/lodash": "^4.14.149",
+    "lodash": "^4.17.15",
+    "node-json-db": "^1.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^12.12.11"
+  }
+}
