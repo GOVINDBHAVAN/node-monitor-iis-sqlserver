@@ -1,9 +1,17 @@
 # because of tsc error
 # npm install lowdb --save
 # npm install --save @types/lowdb
-# npm install --save @types/lodashs
-npm i --save node-json-db
+
+# npm i --save node-json-db
 npm install --save-dev @types/node
 
-some text changes
-test
+npm install winston --save
+npm install winston-daily-rotate-file --save
+npm install app-root-path --save
+
+npm i --save lodash 
+npm install --save @types/lodash
+
+
+npm install node-os-utils --save
+npm install --save @types/node-os-utils
