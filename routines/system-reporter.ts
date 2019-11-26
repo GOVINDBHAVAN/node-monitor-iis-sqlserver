@@ -1,7 +1,6 @@
 import { BaseReporter, Config, AlertInput, NotificationType, NotificationEventType, InputUnit } from './reporter'
 import { cpu, drive, mem } from 'node-os-utils';
 import log from '../config/log';
-import { reverse } from 'dns';
 
 export class SystemReporter extends BaseReporter {
 
@@ -67,7 +66,7 @@ export class SystemReporter extends BaseReporter {
     }
 
     private internalCheckAndFire(input: InputUnit, type: string, eventType: NotificationEventType, result?: number
-        , reserve?: boolean): boolean {
+        , reverse?: boolean): boolean {
         // log.info(`${type} ${NotificationEventType[eventType]} : ${result}`);
         if (result
             && input.threshold

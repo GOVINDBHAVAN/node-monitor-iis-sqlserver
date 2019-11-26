@@ -4,7 +4,7 @@ import { SystemReporter } from './routines/system-reporter';
 const s = new SystemReporter({
     intervalSeconds: 5,
     cpuAvgLoadTime: {
-        info: { interval: 1, threshold: 4 },
+        info: { interval: 1, threshold: 0 },
         warning: { interval: 5, threshold: 3 },
         danger: { interval: 10, threshold: 6 }
     },
