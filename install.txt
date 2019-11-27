@@ -15,3 +15,6 @@ npm install --save @types/lodash
 
 npm install node-os-utils --save
 npm install --save @types/node-os-utils
+
+npm install pouchdb
+npm install pouchdb @types/pouchdb

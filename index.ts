@@ -1,10 +1,17 @@
 // while (1 === 1) { }
+
 import log from './config/log';
 import { SystemReporter } from './routines/system-reporter';
+import * as pd from './routines/db'
+pd.init();
+const db = pd.db;
+pd.printAll();
+
+
 const s = new SystemReporter({
     intervalSeconds: 5,
     cpuAvgLoadTime: {
-        info: { interval: 1, threshold: 0 },
+        info: { interval: 1, threshold: 1 },
         warning: { interval: 5, threshold: 3 },
         danger: { interval: 10, threshold: 6 }
     },
@@ -14,7 +21,7 @@ const s = new SystemReporter({
         // if less then 20% then danger
         danger: { threshold: 20 }
     },
-});
+}, db);
 s.onMsg = (data: any) => log.info(`onMsg`, data);
 s.onAlert = (data: any) => log.info(`onAlert`, data);
 s.onWarning = (data: any) => log.info(`onWarning`, data);

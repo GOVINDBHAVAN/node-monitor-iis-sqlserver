@@ -1,13 +1,16 @@
 import { BaseReporter, Config, AlertInput, NotificationType, NotificationEventType, InputUnit } from './reporter'
 import { cpu, drive, mem } from 'node-os-utils';
 import log from '../config/log';
+import { info } from 'winston';
 
 export class SystemReporter extends BaseReporter {
 
     // if uncomment then it create object of base config not this child config.
     config: SystemReporterConfig;
-    constructor(config: SystemReporterConfig) {
+    db: PouchDB.Database;
+    constructor(config: SystemReporterConfig, db: PouchDB.Database) {
         super(config);
+        this.db = db;
         this.config = config;
     }
     check(): void {
@@ -64,15 +67,28 @@ export class SystemReporter extends BaseReporter {
             if (!done && info) { done = this.internalCheckAndFire(info, type, NotificationEventType.ALERT, cpu.loadavgTime(info.interval)); }
         }
     }
+    private saveInDB(data: any) {
+        const doc = {
+            _id: new Date().toISOString(), ...data
+        };
 
+        this.db.put(doc).then().catch((err) => {
+            log.error(err);
+            console.error(err);
+        });
+    }
     private internalCheckAndFire(input: InputUnit, type: string, eventType: NotificationEventType, result?: number
         , reverse?: boolean): boolean {
         // log.info(`${type} ${NotificationEventType[eventType]} : ${result}`);
+        if (result) {
+            this.saveInDB({ input, type, eventType, result });
+        }
         if (result
             && input.threshold
             && (!reverse ? (result >= input.threshold) : (result < input.threshold))
         ) {
             const data = { result, threshold: input.threshold };
+            this.saveInDB(data);
             this.checkAndRaiseEvent({ type, eventType, data });
             return true;
         }
