@@ -1,5 +1,3 @@
-'use strict';
-
 import winston = require('winston');
 const { createLogger, format, transports } = require('winston');
 const appRoot = require('app-root-path');
