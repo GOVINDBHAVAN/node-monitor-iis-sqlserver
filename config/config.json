@@ -1,0 +1,13 @@
+{
+    "test": {
+        "PORT": 3000
+    },
+    "development": {
+        "PORT": 3000,
+        "EMAIL_SERVICE": "gmail"
+    },
+    "production": {
+        "PORT": 3000,
+        "EMAIL_SERVICE": "gmail"
+    }
+}

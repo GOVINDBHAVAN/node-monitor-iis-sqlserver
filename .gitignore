@@ -1,6 +1,5 @@
 node_modules/
 dist/
 monitor.db/
-config/config.json
 /**/*.log
 /**/secret.json
