@@ -41,9 +41,9 @@ export class SystemReporter extends BaseReporter {
                 const { totalMemMb, freeMemMb } = fm;
                 if (totalMemMb <= 0) { log.info('totalMemMb is zero'); return };
                 const perc = Math.trunc(freeMemMb / totalMemMb * 100);
-                if (!done && danger) { done = this.internalCheckAndFire(danger, type, NotificationEventType.DANGER, perc, true); }
-                if (!done && warning) { done = this.internalCheckAndFire(warning, type, NotificationEventType.WARNING, perc, true); }
-                if (!done && info) { done = this.internalCheckAndFire(info, type, NotificationEventType.ALERT, perc, true); }
+                if (!done && danger) { done = this.internalCheckAndFire(danger, type, NotificationEventType.DANGER, perc, true, { freeMemMb, totalMemMb }); }
+                if (!done && warning) { done = this.internalCheckAndFire(warning, type, NotificationEventType.WARNING, perc, true, { freeMemMb, totalMemMb }); }
+                if (!done && info) { done = this.internalCheckAndFire(info, type, NotificationEventType.ALERT, perc, true, { freeMemMb, totalMemMb }); }
             });
         }
     }
@@ -69,25 +69,37 @@ export class SystemReporter extends BaseReporter {
     }
     private saveInDB(data: any) {
         const doc = {
-            _id: new Date().toISOString(), ...data
+            //_id: new Date().toISOString(), ...data
+            //it won't be unique date, TODO
+            time: new Date(), ...data
         };
+        console.log('save', doc);
 
-        this.db.put(doc).then().catch((err) => {
+        this.db.post(doc).then().catch((err) => {
             log.error(err);
             console.error(err);
         });
     }
     private internalCheckAndFire(input: InputUnit, type: string, eventType: NotificationEventType, result?: number
-        , reverse?: boolean): boolean {
+        , reverse?: boolean
+        , furtherDetail?: {} | {}): boolean {
         // log.info(`${type} ${NotificationEventType[eventType]} : ${result}`);
+        let eventTypeString = NotificationEventType[eventType].toString().toLowerCase();
         if (result) {
-            this.saveInDB({ input, type, eventType, result });
+            this.saveInDB({
+                notification: 'log'
+                , type
+                , input
+                , result
+                , eventTypeString
+                , furtherDetail
+            });
         }
         if (result
             && input.threshold
             && (!reverse ? (result >= input.threshold) : (result < input.threshold))
         ) {
-            const data = { result, threshold: input.threshold };
+            const data = { notification: 'alert', type, result, threshold: input.threshold, eventTypeString, furtherDetail };
             this.saveInDB(data);
             this.checkAndRaiseEvent({ type, eventType, data });
             return true;
