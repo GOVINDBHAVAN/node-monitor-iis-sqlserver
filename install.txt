@@ -18,3 +18,14 @@ npm install --save @types/node-os-utils
 
 npm install pouchdb
 npm install pouchdb @types/pouchdb
+
+npm i nodemailer --save
+npm install @types/nodemailer
+
+
+# because of tsconfig not copying .env to dist.
+# Dotenv is a zero-dependency module that loads environment variables from a .env file into process.env. Storing configuration in the environment separate from code is based on The Twelve-Factor App methodology.
+# npm install dotenv --save
+# npm install --dev-save @types/dotenv
+
+
