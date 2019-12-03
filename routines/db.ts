@@ -4,6 +4,7 @@ export const db = new PouchDB('monitor.db');
 export function init() {
     db.info()
         .then(info => log.info(info));
+    PouchDB.plugin(require('pouchdb-find'));
     // const doc = {
     //     _id: new Date().toISOString(),
     //     name: 'Peter',

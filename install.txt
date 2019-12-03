@@ -17,6 +17,7 @@ npm install node-os-utils --save
 npm install --save @types/node-os-utils
 
 npm install pouchdb
+npm install pouchdb-find
 npm install pouchdb @types/pouchdb
 
 npm i nodemailer --save
