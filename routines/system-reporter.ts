@@ -2,6 +2,7 @@ import { BaseReporter, Config, AlertInput, NotificationType, NotificationEventTy
 import { cpu, drive, mem } from 'node-os-utils';
 import log from '../config/log';
 import { info } from 'winston';
+import { dateDiff } from '../util';
 
 export class SystemReporter extends BaseReporter {
 
@@ -18,7 +19,7 @@ export class SystemReporter extends BaseReporter {
         this.checkDisk();
         this.checkMem();
     }
-    checkMem(): void {
+    async checkMem(): Promise<void> {
         /* { all in MB
             totalMemMb: 5859.13,
             usedMemMb: 3134.66,
@@ -33,18 +34,35 @@ export class SystemReporter extends BaseReporter {
         // { totalMemMb: 5859.13, freeMemMb: 2694.37 }
         // mem.free().then(fm => console.log(`free memory`, fm));
         //TODO: memory free check for 5 to 10 minutes not just current
+        let fm = await mem.free();
         if (this.config.freeMemPercentage) {
             const { info, warning, danger } = this.config.freeMemPercentage;
             const type = 'mem';
-            mem.free().then(fm => {
-                let done = false;
-                const { totalMemMb, freeMemMb } = fm;
-                if (totalMemMb <= 0) { log.info('totalMemMb is zero'); return };
-                const perc = Math.trunc(freeMemMb / totalMemMb * 100);
-                if (!done && danger) { done = this.internalCheckAndFire(danger, type, NotificationEventType.DANGER, perc, true, { freeMemMb, totalMemMb }); }
-                if (!done && warning) { done = this.internalCheckAndFire(warning, type, NotificationEventType.WARNING, perc, true, { freeMemMb, totalMemMb }); }
-                if (!done && info) { done = this.internalCheckAndFire(info, type, NotificationEventType.ALERT, perc, true, { freeMemMb, totalMemMb }); }
-            });
+            //mem.free().then(fm => {
+            let done = false;
+            const { totalMemMb, freeMemMb } = fm;
+            if (totalMemMb <= 0) { log.info('totalMemMb is zero'); return };
+            const perc = Math.trunc(freeMemMb / totalMemMb * 100);
+            if (!done && danger) { done = this.internalCheckAndFire(danger, type, NotificationEventType.DANGER, perc, true, { freeMemMb, totalMemMb }); }
+            if (!done && warning) { done = this.internalCheckAndFire(warning, type, NotificationEventType.WARNING, perc, true, { freeMemMb, totalMemMb }); }
+            if (!done && info) { done = this.internalCheckAndFire(info, type, NotificationEventType.ALERT, perc, true, { freeMemMb, totalMemMb }); }
+            //});
+        }
+
+        if (this.config.ramUtilizationSummaryDurationMinutes) {
+            const type = 'mem';
+            let lastSyncTime: Date;
+            let now = Date.now();
+            let dbValue = await this.db.query(memorySummary._id);
+            if (dbValue) {
+                lastSyncTime = new Date(dbValue.toString());
+            }
+            const durationDiff = dateDiff(lastSyncTime, now);
+            // store 
+            if (durationDiff.minutes >= this.config.ramUtilizationSummaryDurationMinutes) {
+
+            }
+
         }
     }
     checkDisk(): void {
@@ -67,14 +85,14 @@ export class SystemReporter extends BaseReporter {
             if (!done && info) { done = this.internalCheckAndFire(info, type, NotificationEventType.ALERT, cpu.loadavgTime(info.interval)); }
         }
     }
+
     private saveInDB(data: any) {
         const doc = {
             //_id: new Date().toISOString(), ...data
             //it won't be unique date, TODO
             time: new Date(), ...data
         };
-        console.log('save', doc);
-
+        // console.log('save', doc);
         this.db.post(doc).then().catch((err) => {
             log.error(err);
             console.error(err);
@@ -108,6 +126,14 @@ export class SystemReporter extends BaseReporter {
     }
 }
 
+export class memorySummary {
+    static _id: 'mem_last_sync';
+    static time: Date;
+    static overallAvg: number;
+
+
+}
+
 export interface SystemReporterConfig extends Config {
     //avgLoadTime?: number[];
     /**
@@ -125,6 +151,10 @@ export interface SystemReporterConfig extends Config {
         interval is ignored here.
      */
     freeMemPercentage?: AlertInput;
+    /**
+     * To create summary of RAM utilization over the period of given minutes like 15 to 10 minutes
+     */
+    ramUtilizationSummaryDurationMinutes?: number;
 }
 
 //#region testing codes 
