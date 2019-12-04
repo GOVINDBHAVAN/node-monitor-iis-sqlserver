@@ -4,6 +4,7 @@ git reset --hard origin/master
 
 
 to set default branch for the local when push changes on remote.
+https://stackoverflow.com/a/22933955
 git config --global push.default current
 git push -u
 
