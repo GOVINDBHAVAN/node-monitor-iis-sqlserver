@@ -1,0 +1,3 @@
+to reset local with remote: https://stackoverflow.com/a/17336942
+git fetch origin
+git reset --hard origin/master
