@@ -9,10 +9,12 @@ export class SystemReporter extends BaseReporter {
     // if uncomment then it create object of base config not this child config.
     config: SystemReporterConfig;
     db: PouchDB.Database;
+    ms: MemorySummary;
     constructor(config: SystemReporterConfig, db: PouchDB.Database) {
         super(config);
         this.db = db;
         this.config = config;
+        this.ms = new MemorySummary();
     }
     check(): void {
         this.checkCpu();
@@ -52,17 +54,43 @@ export class SystemReporter extends BaseReporter {
         if (this.config.ramUtilizationSummaryDurationMinutes) {
             const type = 'mem';
             let lastSyncTime: Date;
-            let now = Date.now();
-            let dbValue = await this.db.query(memorySummary._id);
+            let now = new Date();
+            let dbValue = null;
+            try {
+                dbValue = await this.db.query(this.ms._id);
+            } catch { }
             if (dbValue) {
                 lastSyncTime = new Date(dbValue.toString());
             }
             const durationDiff = dateDiff(lastSyncTime, now);
+            console.log('summary', { dbValue, lastSyncTime, durationDiff });
             // store 
             if (durationDiff.minutes >= this.config.ramUtilizationSummaryDurationMinutes) {
-
+                console.log('total summary', this.ms);
+                this.ms.reset();
             }
+            this.ms.time = now;
+            this.ms.overallTotal += fm.freeMemMb;
+            this.ms.count += 1;
+            console.log(this.ms);
 
+            if (dbValue) {
+                try {
+                    await this.db.post(this.ms);
+                }
+                catch (err) {
+                    log.error(err);
+                    console.error(err);
+                };
+            } else {
+                try {
+                    await this.db.put(this.ms);
+                }
+                catch (err) {
+                    log.error(err);
+                    console.error(err);
+                };
+            }
         }
     }
     checkDisk(): void {
@@ -125,13 +153,27 @@ export class SystemReporter extends BaseReporter {
         return false;
     }
 }
-
-export class memorySummary {
-    static _id: 'mem_last_sync';
-    static time: Date;
-    static overallAvg: number;
-
-
+/** To calculate RAM summary over the period of time */
+export class MemorySummary {
+    _id: 'mem_last_sync';
+    time: Date;
+    /** Accumulated value of total free RAM from last reset */
+    overallTotal: number = 0;
+    /** count of interval of accumulation */
+    count: number = 0;
+    /** Calculate summary as per current data */
+    get summary(): number {
+        let ramSummary = 0;
+        if (this.overallTotal && this.count) {
+            ramSummary = this.overallTotal / this.count * 100;
+        }
+        return ramSummary;
+    }
+    reset(): void {
+        this.time = new Date();
+        this.overallTotal = 0;
+        this.count = 0;
+    }
 }
 
 export interface SystemReporterConfig extends Config {

@@ -39,7 +39,7 @@ const s = new SystemReporter({
         // if less then 20% then danger
         danger: { threshold: 20 }
     },
-    ramUtilizationSummaryDurationMinutes: 5
+    ramUtilizationSummaryDurationMinutes: 1
 }, db);
 s.onMsg = (data: any) => log.info(`onMsg`, data);
 s.onAlert = (data: any) => log.info(`onAlert`, data);
