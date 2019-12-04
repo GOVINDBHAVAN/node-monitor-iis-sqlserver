@@ -1,3 +1,12 @@
 to reset local with remote: https://stackoverflow.com/a/17336942
 git fetch origin
 git reset --hard origin/master
+
+
+to set default branch for the local when push changes on remote.
+git config --global push.default current
+git push -u
+
+otherwise do this every time
+to commit from local to remote from other computer:
+git push --set-upstream origin master
