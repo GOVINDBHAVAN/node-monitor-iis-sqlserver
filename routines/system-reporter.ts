@@ -3,6 +3,7 @@ import { cpu, drive, mem } from 'node-os-utils';
 import log from '../config/log';
 import { info } from 'winston';
 import { dateDiff } from '../util';
+import { upsert } from './db';
 
 export class SystemReporter extends BaseReporter {
 
@@ -62,6 +63,9 @@ export class SystemReporter extends BaseReporter {
             if (dbValue) {
                 lastSyncTime = new Date(dbValue.toString());
             }
+            else {
+                this.ms.time = now;
+            }
             const durationDiff = dateDiff(lastSyncTime, now);
             console.log('summary', { dbValue, lastSyncTime, durationDiff });
             // store 
@@ -69,28 +73,11 @@ export class SystemReporter extends BaseReporter {
                 console.log('total summary', this.ms);
                 this.ms.reset();
             }
-            this.ms.time = now;
             this.ms.overallTotal += fm.freeMemMb;
             this.ms.count += 1;
             console.log(this.ms);
 
-            if (dbValue) {
-                try {
-                    await this.db.post(this.ms);
-                }
-                catch (err) {
-                    log.error(err);
-                    console.error(err);
-                };
-            } else {
-                try {
-                    await this.db.put(this.ms);
-                }
-                catch (err) {
-                    log.error(err);
-                    console.error(err);
-                };
-            }
+            await upsert(this.ms, dbValue === null);
         }
     }
     checkDisk(): void {
@@ -155,7 +142,7 @@ export class SystemReporter extends BaseReporter {
 }
 /** To calculate RAM summary over the period of time */
 export class MemorySummary {
-    _id: 'mem_last_sync';
+    _id: string = 'mem_last_sync';
     time: Date;
     /** Accumulated value of total free RAM from last reset */
     overallTotal: number = 0;
