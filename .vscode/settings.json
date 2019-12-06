@@ -3,5 +3,19 @@
     "typescript.preferences.quoteStyle": "single",
     "prettier.jsxSingleQuote": true,
     "prettier.singleQuote": true,
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "workbench.colorCustomizations": {
+        "activityBar.background": "#2C301B",
+        "titleBar.activeBackground": "#3D4325",
+        "titleBar.activeForeground": "#FAFAF7"
+    },
+    "files.exclude": {
+        "**/dist": true,
+    },
+    "search.exclude": {
+        "**/.git": true,
+        "**/node_modules": true,
+        "**/dist": true,
+        "**/tmp": true
+    },
 }

@@ -58,8 +58,15 @@ export class SystemReporter extends BaseReporter {
             let now = new Date();
             let dbValue = null;
             try {
-                dbValue = await this.db.query(this.ms._id);
+                //dbValue = await this.db.query(this.ms._id);
+                dbValue = await this.db.find({
+                    selector: {
+                        tag: this.ms.tag
+                    }
+                });
             } catch { }
+            console.log('dbvalue', dbValue);
+
             if (dbValue) {
                 lastSyncTime = new Date(dbValue.toString());
             }
@@ -76,7 +83,6 @@ export class SystemReporter extends BaseReporter {
             this.ms.overallTotal += fm.freeMemMb;
             this.ms.count += 1;
             console.log(this.ms);
-
             await upsert(this.ms, dbValue === null);
         }
     }
@@ -142,7 +148,10 @@ export class SystemReporter extends BaseReporter {
 }
 /** To calculate RAM summary over the period of time */
 export class MemorySummary {
-    _id: string = 'mem_last_sync';
+    get _id(): string {
+        return this.tag;
+    }
+    tag: string = 'mem_last_sync';
     time: Date;
     /** Accumulated value of total free RAM from last reset */
     overallTotal: number = 0;

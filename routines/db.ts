@@ -20,7 +20,7 @@ export function init() {
     // });
 }
 export async function upsert(doc: any, post: boolean): Promise<any> {
-    console.log('doc', doc);
+    console.log('doc', post, doc);
 
     if (post) {
         try {

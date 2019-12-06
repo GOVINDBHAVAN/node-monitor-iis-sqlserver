@@ -7,7 +7,6 @@ import * as pd from './routines/db'
 pd.init();
 const db = pd.db;
 //pd.printAll();
-
 // db.find({
 //     selector: {
 //         notification: 'alert'
