@@ -33,7 +33,9 @@ export async function upsert(doc: any, post: boolean): Promise<any> {
         };
     }
     try {
-        await db.put(doc);
+        // added {force: true} Conflicting happen when you try to update a document without _rev or the revision of your documents outdated (deleted from revision tree).
+        // So, to update without a valid _rev. You can set options force equal true
+        await db.put(doc, { force: true });
     }
     catch (err) {
         log.error(err);
