@@ -6,7 +6,7 @@ import { SystemReporter } from './routines/system-reporter';
 import * as pd from './routines/db'
 pd.init();
 const db = pd.db;
-//pd.printAll();
+// pd.printAll();
 // db.find({
 //     selector: {
 //         notification: 'alert'
