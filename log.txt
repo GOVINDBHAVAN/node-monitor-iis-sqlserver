@@ -1,0 +1,31 @@
+[Sun, 08 Dec 2019 09:29:27 GMT] [info] [<0.000.0>] pouchdb-server has started on http://127.0.0.1:5000/
+[Sun, 08 Dec 2019 09:29:27 GMT] [info] [<0.000.0>] database files will be saved to ./monitor.db/
+[Sun, 08 Dec 2019 09:29:27 GMT] [info] [<0.000.0>] navigate to http://127.0.0.1:5000/_utils for the Fauxton UI.
+[Sun, 08 Dec 2019 09:29:45 GMT] [info] [<0.000.0>] 127.0.0.1 - - GET / 200
+[Sun, 08 Dec 2019 09:30:03 GMT] [info] [<0.000.0>] pouchdb-server has started on http://127.0.0.1:5000/
+[Sun, 08 Dec 2019 09:30:03 GMT] [info] [<0.000.0>] database files will be saved to ./monitor.db/
+[Sun, 08 Dec 2019 09:30:03 GMT] [info] [<0.000.0>] navigate to http://127.0.0.1:5000/_utils for the Fauxton UI.
+[Sun, 08 Dec 2019 09:30:05 GMT] [info] [<0.000.0>] 127.0.0.1 - - GET / 304
+[Sun, 08 Dec 2019 09:30:10 GMT] [info] [<0.000.0>] 127.0.0.1 - - GET /_utils 301
+[Sun, 08 Dec 2019 09:30:10 GMT] [info] [<0.000.0>] 127.0.0.1 - - GET /_utils/ 200
+[Sun, 08 Dec 2019 09:30:10 GMT] [info] [<0.000.0>] 127.0.0.1 - - GET /_utils/dashboard.assets/css/styles-a9623008fc27e79da2388441deeacfab.css 200
+[Sun, 08 Dec 2019 09:30:10 GMT] [info] [<0.000.0>] 127.0.0.1 - - GET /_utils/dashboard.assets/js/bundle-34997e32896293a1fa5d71f79eb1b4f7.js 200
+[Sun, 08 Dec 2019 09:30:10 GMT] [info] [<0.000.0>] 127.0.0.1 - - GET /_session 200
+[Sun, 08 Dec 2019 09:30:11 GMT] [info] [<0.000.0>] 127.0.0.1 - - GET /_session 304
+[Sun, 08 Dec 2019 09:30:11 GMT] [info] [<0.000.0>] 127.0.0.1 - - GET / 304
+[Sun, 08 Dec 2019 09:30:11 GMT] [info] [<0.000.0>] 127.0.0.1 - - GET /_utils/dashboard.assets/img/pouchdb-site.png 200
+[Sun, 08 Dec 2019 09:30:11 GMT] [info] [<0.000.0>] 127.0.0.1 - - GET /_all_dbs?_=1575797410824 200
+[Sun, 08 Dec 2019 09:30:11 GMT] [info] [<0.000.0>] 127.0.0.1 - - GET /_all_dbs?startkey=%22%22&endkey=%22%E9%A6%99%22&limit=30&_=1575797410825 200
+[Sun, 08 Dec 2019 09:30:11 GMT] [info] [<0.000.0>] 127.0.0.1 - - GET /_utils/dashboard.assets/fonts/fauxtonicon5.woff 200
+[Sun, 08 Dec 2019 09:30:11 GMT] [info] [<0.000.0>] 127.0.0.1 - - GET /_replicator?_=1575797410826 200
+[Sun, 08 Dec 2019 09:30:11 GMT] [info] [<0.000.0>] 127.0.0.1 - - GET /_users?_=1575797410827 200
+[Sun, 08 Dec 2019 09:30:11 GMT] [info] [<0.000.0>] 127.0.0.1 - - GET /_utils/dashboard.assets/fonts/fontawesome-webfont.woff 200
+[Sun, 08 Dec 2019 09:30:11 GMT] [info] [<0.000.0>] 127.0.0.1 - - GET /_utils/dashboard.assets/img/pouchdb-favicon.png 200
+[Sun, 08 Dec 2019 09:30:29 GMT] [info] [<0.000.0>] 127.0.0.1 - - GET /_active_tasks 200
+[Sun, 08 Dec 2019 09:30:31 GMT] [info] [<0.000.0>] 127.0.0.1 - - GET /_all_dbs?_=1575797410828 200
+[Sun, 08 Dec 2019 09:30:31 GMT] [info] [<0.000.0>] 127.0.0.1 - - GET /_replicator?_=1575797410829 200
+[Sun, 08 Dec 2019 09:30:31 GMT] [info] [<0.000.0>] 127.0.0.1 - - GET /_users?_=1575797410830 200
+[Sun, 08 Dec 2019 09:30:54 GMT] [info] [<0.000.0>] 127.0.0.1 - - GET /_utils/dashboard.assets/img/pouchdb-minilogo.png 200
+[Sun, 08 Dec 2019 09:31:25 GMT] [info] [<0.000.0>] 127.0.0.1 - - GET /_utils/dashboard.assets/js/bundle-34997e32896293a1fa5d71f79eb1b4f7.js 304
+[Sun, 08 Dec 2019 09:32:08 GMT] [info] [<0.000.0>] 127.0.0.1 - - GET /_membership 200
+[Sun, 08 Dec 2019 09:32:08 GMT] [info] [<0.000.0>] 127.0.0.1 - - GET /_node/node1@127.0.0.1/_config 200

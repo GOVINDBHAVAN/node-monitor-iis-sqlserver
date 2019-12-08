@@ -4,10 +4,14 @@
     },
     "development": {
         "PORT": 3000,
-        "EMAIL_SERVICE": "gmail"
+        "ON_ALERT_EMAIL": false,
+        "ON_WARNING_EMAIL": true,
+        "ON_DANGER_EMAIL": true
     },
     "production": {
         "PORT": 3000,
-        "EMAIL_SERVICE": "gmail"
+        "ON_ALERT_EMAIL": false,
+        "ON_WARNING_EMAIL": true,
+        "ON_DANGER_EMAIL": true
     }
 }

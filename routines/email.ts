@@ -6,7 +6,7 @@ import config from '../config/config';
 
 export const DefaultRecipient: Mail.Options = {
     from: config['EMAIL_USER'], // sender address
-    to: config['EMAIL_USER'], // list of receivers
+    to: config['EMAIL_TO'], // list of receivers
     subject: "Hello", // Subject line
     text: "Hello world?", // plain text body
     html: "<b>Hello world?</b>" // html body

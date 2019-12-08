@@ -68,6 +68,8 @@ export class SystemReporter extends BaseReporter {
             } catch (err) {
                 console.log(err);
             }
+            console.log('dbvalue', dbValue);
+
             if (dbValue && dbValue.time) {
                 lastSyncTime = new Date(dbValue.time);
             }
@@ -79,7 +81,7 @@ export class SystemReporter extends BaseReporter {
             // store 
             this.ms.totalMemMb = fm.totalMemMb;
             this.ms.lastFreeMemMb = fm.freeMemMb;
-            this.ms.percentage = Math.trunc(fm.freeMemMb / fm.totalMemMb * 100);
+            this.ms.percentage = 100 - Math.trunc(fm.freeMemMb / fm.totalMemMb * 100);
             this.ms.avgTotalFreeMemMb += this.ms.percentage;
             this.ms.avgTotalDurationSeconds = (durationDiff.milliseconds || 0) / 1000;
             this.ms.count += 1;

@@ -22,6 +22,9 @@ npm install pouchdb-find
 #npm install --save @types/pouchdb-upsert
 npm install pouchdb @types/pouchdb
 
+# pouchdb viewer application
+npm install -g pouchdb-server
+
 npm i nodemailer --save
 npm install @types/nodemailer
 

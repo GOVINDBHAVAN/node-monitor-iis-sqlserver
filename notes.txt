@@ -1,3 +1,9 @@
 to create load on system
 stress --cpu 3
 stress -c 2 -i 1 -m 1 --vm-bytes 1024M -t 60s
+
+
+Pouchdb viewer https://github.com/pouchdb/pouchdb-server
+
+# pouchdb-server --dir ./monitor.db/ --port 5000
+# OPEN: http://localhost:5000/_utils/
