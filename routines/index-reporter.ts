@@ -20,14 +20,20 @@ const db = pd.db;
 // });
 
 
+process.on('message', function (m) {
+    if (m.toString().toLowerCase() === 'exit') {
+        process.exit(0);
+    }
+});
+
 // log.info('start');
 // email.send();
 // log.info('exit');
 //process.exit(0);
 
-let onAlertEmail = config['ON_ALERT_EMAIL'] || false;
-let onWarningEmail = config['ON_WARNING_EMAIL'] || false;
-let onDangerEmail = config['ON_DANGER_EMAIL'] || false;
+let onAlertEmail: boolean = config['ON_ALERT_EMAIL'] || false;
+let onWarningEmail: boolean = config['ON_WARNING_EMAIL'] || false;
+let onDangerEmail: boolean = config['ON_DANGER_EMAIL'] || false;
 
 const s = new SystemReporter({
     // to check system in this internal seconds
@@ -58,7 +64,9 @@ s.onDanger = (data: any) => onDanger(data);
 
 function onAlert(data: any) {
     log.info(`onAlert`, data);
+    if (onAlertEmail) {
 
+    }
 }
 function onWarning(data: any) {
     log.info(`onWarning`, data);

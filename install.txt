@@ -4,10 +4,15 @@
 
 # npm i --save node-json-db
 npm install --save-dev @types/node
+npm install --save @types/uuid
 
 npm install winston --save
 npm install winston-daily-rotate-file --save
 npm install app-root-path --save
+
+# for email sending
+npm install email-templates pug
+npm install --save @types/email-templates
 
 npm i --save lodash 
 npm install --save @types/lodash

@@ -1,8 +1,8 @@
 import { BaseReporter, Config, AlertInput, NotificationType, NotificationEventType, InputUnit } from './reporter'
-import { cpu, drive, mem } from 'node-os-utils';
+import { cpu, drive, mem, oscmd, os } from 'node-os-utils';
 import log from '../config/log';
 import { info } from 'winston';
-import { dateDiff } from '../util';
+import { dateDiff, guid } from '../util';
 import to from './to';
 import { upsert, first } from './db';
 
@@ -12,16 +12,37 @@ export class SystemReporter extends BaseReporter {
     config: SystemReporterConfig;
     db: PouchDB.Database;
     ms: MemorySummary;
+    sysInfo: OperatingSystemDetail;
     constructor(config: SystemReporterConfig, db: PouchDB.Database) {
         super(config);
         this.db = db;
         this.config = config;
         this.ms = new MemorySummary();
+        this.syncCheckOSDetails();
     }
     check(): void {
         this.checkCpu();
         this.checkDisk();
         this.checkMem();
+    }
+    systemInformation(): string {
+        let rtn = JSON.stringify(this.sysInfo);
+        return rtn;
+    }
+    /** Sync function to fetch OS details */
+    syncCheckOSDetails() {
+        this.sysInfo = new OperatingSystemDetail();
+        try {
+            oscmd.whoami().then(userName => {
+                this.sysInfo.userName = userName // admin
+            });
+            this.sysInfo.operatingSystem = os.oos().name;
+            this.sysInfo.platform = os.platform().toString();
+            this.sysInfo.hostname = os.hostname();
+            this.sysInfo.ip = os.ip();
+            this.sysInfo.type = os.type();
+            this.sysInfo.arch = os.arch();
+        } catch (err) { log.error(err); }
     }
     async checkMem(): Promise<void> {
         /* { all in MB
@@ -67,9 +88,8 @@ export class SystemReporter extends BaseReporter {
                 }));
             } catch (err) {
                 console.log(err);
+                log.error(err);
             }
-            console.log('dbvalue', dbValue);
-
             if (dbValue && dbValue.time) {
                 lastSyncTime = new Date(dbValue.time);
             }
@@ -86,15 +106,16 @@ export class SystemReporter extends BaseReporter {
             this.ms.avgTotalDurationSeconds = (durationDiff.milliseconds || 0) / 1000;
             this.ms.count += 1;
             this.ms.calc();
-            console.log(this.ms);
+            // console.log(this.ms);
 
             if (durationDiff.minutes >= this.config.ramUtilizationSummaryDurationMinutes) {
                 let store = { ...this.ms };
                 store.tag = 'avg_mem';
-                store._id = store.tag + ' as at ' + store.time.toString();
+                //store._id = store.tag + ' as at ' + store.time.toString();
+                store._id = guid();
                 // store the overvall data for reporting
                 upsert(store);
-                console.log('total summary', this.ms);
+                log.info(store.tag, this.ms);
                 this.ms.reset();
             }
             await upsert(this.ms);
@@ -108,6 +129,9 @@ export class SystemReporter extends BaseReporter {
         //     })
     }
     checkCpu(): void {
+        try {
+            this.sysInfo.uptimeSeconds = os.uptime();
+        } catch (err) { log.error(err); }
         if (this.config.cpuAvgLoadTime) {
             // use "top" command to cross check the result
             // execute this command to create fake load: "stress --cpu 3"  (linux)
@@ -159,6 +183,17 @@ export class SystemReporter extends BaseReporter {
         }
         return false;
     }
+}
+/** Operating system related details */
+export class OperatingSystemDetail {
+    userName: string;
+    operatingSystem: string;
+    platform: string;
+    hostname: string;
+    ip: string;
+    type: string;
+    arch: string;
+    uptimeSeconds: number;
 }
 /** To calculate RAM summary over the period of time */
 export class MemorySummary {
