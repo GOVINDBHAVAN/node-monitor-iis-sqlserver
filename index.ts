@@ -40,11 +40,11 @@ const s = new SystemReporter({
     },
     ramUtilizationSummaryDurationMinutes: 1
 }, db);
-s.onMsg = (data: any) => log.info(`onMsg`, data);
-s.onAlert = (data: any) => log.info(`onAlert`, data);
-s.onWarning = (data: any) => log.info(`onWarning`, data);
-s.onDanger = (data: any) => log.info(`onDanger`, data);
-log.info('test', new Date(), 'a');
+// s.onMsg = (data: any) => log.info(`onMsg`, data);
+// s.onAlert = (data: any) => log.info(`onAlert`, data);
+// s.onWarning = (data: any) => log.info(`onWarning`, data);
+// s.onDanger = (data: any) => log.info(`onDanger`, data);
+// log.info('test', new Date(), 'a');
 
 // var osu = require('node-os-utils')
 // var cpu = osu.cpu

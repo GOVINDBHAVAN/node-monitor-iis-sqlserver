@@ -1,0 +1,2 @@
+# this shows all the requests with 100000 miliseconds or longer elapsed time.
+appcmd list requests /elapsed:100000

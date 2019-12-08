@@ -3,7 +3,8 @@ import { cpu, drive, mem } from 'node-os-utils';
 import log from '../config/log';
 import { info } from 'winston';
 import { dateDiff } from '../util';
-import { upsert } from './db';
+import to from './to';
+import { upsert, first } from './db';
 
 export class SystemReporter extends BaseReporter {
 
@@ -56,34 +57,45 @@ export class SystemReporter extends BaseReporter {
             const type = 'mem';
             let lastSyncTime: Date;
             let now = new Date();
-            let dbValue = null;
+            let dbValue: MemorySummary;
             try {
                 //dbValue = await this.db.query(this.ms._id);
-                dbValue = await this.db.find({
+                dbValue = first(await this.db.find({
                     selector: {
                         tag: this.ms.tag
                     }
-                });
-            } catch { }
-            console.log('dbvalue', dbValue);
-
-            if (dbValue) {
-                lastSyncTime = new Date(dbValue.toString());
+                }));
+            } catch (err) {
+                console.log(err);
+            }
+            if (dbValue && dbValue.time) {
+                lastSyncTime = new Date(dbValue.time);
             }
             else {
                 this.ms.time = now;
             }
             const durationDiff = dateDiff(lastSyncTime, now);
-            console.log('summary', { dbValue, lastSyncTime, durationDiff });
+            // console.log('summary', { dbValue, lastSyncTime, durationDiff });
             // store 
+            this.ms.totalMemMb = fm.totalMemMb;
+            this.ms.lastFreeMemMb = fm.freeMemMb;
+            this.ms.percentage = Math.trunc(fm.freeMemMb / fm.totalMemMb * 100);
+            this.ms.avgTotalFreeMemMb += this.ms.percentage;
+            this.ms.avgTotalDurationSeconds = (durationDiff.milliseconds || 0) / 1000;
+            this.ms.count += 1;
+            this.ms.calc();
+            console.log(this.ms);
+
             if (durationDiff.minutes >= this.config.ramUtilizationSummaryDurationMinutes) {
+                let store = { ...this.ms };
+                store.tag = 'avg_mem';
+                store._id = store.tag + ' as at ' + store.time.toString();
+                // store the overvall data for reporting
+                upsert(store);
                 console.log('total summary', this.ms);
                 this.ms.reset();
             }
-            this.ms.overallTotal += fm.freeMemMb;
-            this.ms.count += 1;
-            console.log(this.ms);
-            await upsert(this.ms, dbValue === null);
+            await upsert(this.ms);
         }
     }
     checkDisk(): void {
@@ -148,27 +160,39 @@ export class SystemReporter extends BaseReporter {
 }
 /** To calculate RAM summary over the period of time */
 export class MemorySummary {
-    get _id(): string {
-        return this.tag;
-    }
-    tag: string = 'mem_last_sync';
+    _id: string;
+    tag: string = 'mem_overvall_status';
     time: Date;
+    /** Total installed RAM MB */
+    totalMemMb: number = 0;
+    /** Free memory as at last sync */
+    lastFreeMemMb: number = 0;
+    /** RAM utilization percentage as at last sync */
+    percentage: number = 0;
     /** Accumulated value of total free RAM from last reset */
-    overallTotal: number = 0;
+    avgTotalFreeMemMb: number = 0;
+    /** count of interval of accumulation */
+    avgTotalDurationSeconds: number = 0;
     /** count of interval of accumulation */
     count: number = 0;
-    /** Calculate summary as per current data */
-    get summary(): number {
-        let ramSummary = 0;
-        if (this.overallTotal && this.count) {
-            ramSummary = this.overallTotal / this.count * 100;
+    /** Overall percentage utilization as per current data */
+    avgPercentage: number = 0;
+    // not printing in console.log auto
+    //get summary(): number {
+    calc() {
+        this.avgPercentage = 0;
+        if (this.avgTotalFreeMemMb && this.count) {
+            this.avgPercentage = 100 - Math.trunc(this.avgTotalFreeMemMb / this.count);
         }
-        return ramSummary;
     }
     reset(): void {
         this.time = new Date();
-        this.overallTotal = 0;
+        this.avgTotalFreeMemMb = 0;
         this.count = 0;
+    }
+    constructor() {
+        this.time = new Date();
+        this._id = this.tag;
     }
 }
 

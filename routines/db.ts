@@ -1,6 +1,6 @@
 import PouchDB from 'pouchdb';
 import log from '../config/log';
-export const db = new PouchDB('monitor.db');
+export const db = new PouchDB('monitor.db', { revs_limit: 1, auto_compaction: true });
 export function init() {
     db.info()
         .then(info => log.info(info));
@@ -19,19 +19,28 @@ export function init() {
     //     console.error(err);
     // });
 }
-export async function upsert(doc: any, post: boolean): Promise<any> {
-    console.log('doc', post, doc);
-
-    if (post) {
-        try {
-            await db.post(doc);
-            return;
-        }
-        catch (err) {
-            log.error(err);
-            console.error(err);
-        };
-    }
+/**
+ * Check query result and return the first record
+ * @param doc Result of query returns
+ */
+export function first(doc: any): any {
+    if (!doc) return doc;
+    //let result = await doc.resolve();
+    //if (!result || !result.docs || !result.docs.length) return doc;
+    if (!doc || !doc.docs || !doc.docs.length) return doc;
+    return doc.docs[0];
+}
+export async function upsert(doc: any): Promise<any> {
+    // if (post) {
+    //     try {
+    //         await db.post(doc);
+    //         return;
+    //     }
+    //     catch (err) {
+    //         log.error(err);
+    //         console.error(err);
+    //     };
+    // }
     try {
         // added {force: true} Conflicting happen when you try to update a document without _rev or the revision of your documents outdated (deleted from revision tree).
         // So, to update without a valid _rev. You can set options force equal true
