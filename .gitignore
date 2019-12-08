@@ -3,3 +3,4 @@ dist/
 monitor.db/
 /**/*.log
 /**/secret.json
+/**/*.~*.xlsx
