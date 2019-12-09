@@ -11,3 +11,7 @@ git push -u
 otherwise do this every time
 to commit from local to remote from other computer:
 git push --set-upstream origin master
+
+to overwrite local file with remote
+git checkout HEAD^ file/to/overwrite
+git pull
