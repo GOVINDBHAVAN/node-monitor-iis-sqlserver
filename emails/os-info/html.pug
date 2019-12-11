@@ -1,0 +1,15 @@
+p Server #{hostname},
+
+p CPU ${cpu_notification}, ${cpu_result} / ${cpu_threshold} threshold
+p RAM ${mem_notification}, ${mem_result} / ${mem_threshold} threshold
+
+p Server Details:
+table(style='width:100%', border='1')
+  tr
+    th UserName
+    th OS
+    th IP
+  tr
+    td ${userName}
+    td ${operatingSystem}, ${platform}, ${arch}
+    td ${ip}

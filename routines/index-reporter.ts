@@ -5,6 +5,7 @@ import * as email from './email';
 import { SystemReporter } from './system-reporter';
 import * as pd from './db'
 import { config } from 'process';
+import { createEmail } from './email';
 pd.init();
 const db = pd.db;
 // pd.printAll();
@@ -65,7 +66,10 @@ s.onDanger = (data: any) => onDanger(data);
 function onAlert(data: any) {
     log.info(`onAlert`, data);
     if (onAlertEmail) {
-
+        let emailData = {
+            hostname: ''
+        };
+        sendEmail(emailData);
     }
 }
 function onWarning(data: any) {
@@ -76,8 +80,21 @@ function onDanger(data: any) {
 
 }
 
-
-
+function sendEmail(data) {
+    let email = createEmail();
+    email.send({
+        template: 'os-info',
+        // otherwise error is coming
+        message: {
+            to: config['EMAIL_TO'],
+        },
+        locals: {
+            name: 'Govind'
+        }
+    })
+        .then(console.log)
+        .catch(console.error);
+}
 
 
 // log.info('test', new Date(), 'a');
@@ -89,3 +106,4 @@ function onDanger(data: any) {
 //     .then(cpuPercentage => {
 //         log.info(cpuPercentage)
 //     })
+
