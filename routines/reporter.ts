@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import { log } from 'winston';
+import { SystemReporter } from './system-reporter';
 
 export interface Reporter {
     /**
@@ -61,6 +62,8 @@ export interface NotificationType {
     eventType: NotificationEventType;
     /** data related to event */
     data: any;
+    /** Instance of reporter to fetch further detail */
+    reporter: BaseReporter;
 }
 
 

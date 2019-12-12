@@ -36,6 +36,8 @@ export class SystemReporter extends BaseReporter {
             oscmd.whoami().then(userName => {
                 this.sysInfo.userName = userName // admin
             });
+        } catch (err) { log.error(err); }
+        try {
             this.sysInfo.operatingSystem = os.oos().name;
             this.sysInfo.platform = os.platform().toString();
             this.sysInfo.hostname = os.hostname();
@@ -139,6 +141,7 @@ export class SystemReporter extends BaseReporter {
             const { info, warning, danger } = this.config.cpuAvgLoadTime;
             const type = 'cpu';
             let done = false;
+            //TODO it is not working in Windows returning 0
             if (!done && danger) { done = this.internalCheckAndFire(danger, type, NotificationEventType.DANGER, cpu.loadavgTime(danger.interval)); }
             if (!done && warning) { done = this.internalCheckAndFire(warning, type, NotificationEventType.WARNING, cpu.loadavgTime(warning.interval)); }
             if (!done && info) { done = this.internalCheckAndFire(info, type, NotificationEventType.ALERT, cpu.loadavgTime(info.interval)); }
@@ -178,7 +181,7 @@ export class SystemReporter extends BaseReporter {
         ) {
             const data = { notification: 'alert', type, result, threshold: input.threshold, eventTypeString, furtherDetail };
             this.saveInDB(data);
-            this.checkAndRaiseEvent({ type, eventType, data });
+            this.checkAndRaiseEvent({ type, eventType, data, reporter: this });
             return true;
         }
         return false;

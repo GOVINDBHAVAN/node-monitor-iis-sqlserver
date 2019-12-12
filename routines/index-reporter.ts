@@ -2,10 +2,11 @@
 
 import log from '../config/log';
 import * as email from './email';
-import { SystemReporter } from './system-reporter';
+import { SystemReporter, OperatingSystemDetail } from './system-reporter';
 import * as pd from './db'
 import { config } from 'process';
 import { createEmail } from './email';
+import { secondToDayHoursMinutes } from '../util';
 pd.init();
 const db = pd.db;
 // pd.printAll();
@@ -47,7 +48,7 @@ const s = new SystemReporter({
     },
     freeMemPercentage: {
         // if less then 41% then warning
-        warning: { threshold: 41 },
+        warning: { threshold: 91 },
         // if less then 20% then danger
         danger: { threshold: 20 }
     },
@@ -63,24 +64,44 @@ s.onAlert = (data: any) => onAlert(data);
 s.onWarning = (data: any) => onWarning(data);
 s.onDanger = (data: any) => onDanger(data);
 
+
 function onAlert(data: any) {
     log.info(`onAlert`, data);
-    if (onAlertEmail) {
-        let emailData = {
-            hostname: ''
-        };
-        sendEmail(emailData);
+    // at member variable it is not getting value.
+    if (!onAlertEmail) {
+        return;
     }
+    sendEmail(data, 'alert');
 }
 function onWarning(data: any) {
     log.info(`onWarning`, data);
+    //TODO unable to pass CONFIG/PROCESS ENV to child process
+    // if (!onWarningEmail) {
+    //     return;
+    // }
+    sendEmail(data, 'warning');
 }
 function onDanger(data: any) {
     log.info(`onDanger`, data);
-
+    // if (!onDangerEmail) {
+    //     return;
+    // }
+    sendEmail(data, 'danger');
 }
 
-function sendEmail(data) {
+function sendEmail(data: any, type: string) {
+    let { reporter } = data;
+    let emailData = {};
+    if (reporter) {
+        let sysInfo = reporter.sysInfo as OperatingSystemDetail;
+        emailData = {
+            ...emailData,
+            ...sysInfo,
+            uptime: secondToDayHoursMinutes(sysInfo.uptimeSeconds)
+        };
+    }
+    console.log('sending email', emailData, data);
+
     let email = createEmail();
     email.send({
         template: 'os-info',
@@ -88,9 +109,7 @@ function sendEmail(data) {
         message: {
             to: config['EMAIL_TO'],
         },
-        locals: {
-            name: 'Govind'
-        }
+        locals: emailData
     })
         .then(console.log)
         .catch(console.error);
