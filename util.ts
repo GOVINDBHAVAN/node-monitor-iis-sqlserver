@@ -34,3 +34,7 @@ export function secondToDayHoursMinutes(seconds) {
     // console.log(days + " days, " + hrs + " Hrs, " + mnts + " Minutes, " + seconds + " Seconds");
     return { days, hours, minutes, seconds };
 }
+
+export function printTrace() {
+    console.log(new Error().stack);
+}

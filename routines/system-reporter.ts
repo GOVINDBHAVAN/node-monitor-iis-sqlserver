@@ -33,9 +33,11 @@ export class SystemReporter extends BaseReporter {
     syncCheckOSDetails() {
         this.sysInfo = new OperatingSystemDetail();
         try {
-            oscmd.whoami().then(userName => {
-                this.sysInfo.userName = userName // admin
-            });
+            if (oscmd) {
+                oscmd.whoami().then(userName => {
+                    this.sysInfo.userName = userName // admin
+                });
+            }
         } catch (err) { log.error(err); }
         try {
             this.sysInfo.operatingSystem = os.oos().name;

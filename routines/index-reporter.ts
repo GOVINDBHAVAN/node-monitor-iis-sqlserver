@@ -6,7 +6,7 @@ import { SystemReporter, OperatingSystemDetail } from './system-reporter';
 import * as pd from './db'
 import { config } from 'process';
 import { createEmail } from './email';
-import { secondToDayHoursMinutes } from '../util';
+import { secondToDayHoursMinutes, printTrace } from '../util';
 pd.init();
 const db = pd.db;
 // pd.printAll();
@@ -33,10 +33,10 @@ process.on('message', function (m) {
 // log.info('exit');
 //process.exit(0);
 
+
 let onAlertEmail: boolean = config['ON_ALERT_EMAIL'] || false;
 let onWarningEmail: boolean = config['ON_WARNING_EMAIL'] || false;
 let onDangerEmail: boolean = config['ON_DANGER_EMAIL'] || false;
-
 const s = new SystemReporter({
     // to check system in this internal seconds
     intervalSeconds: 5,
@@ -54,6 +54,7 @@ const s = new SystemReporter({
     },
     ramUtilizationSummaryDurationMinutes: 1
 }, db);
+process.exit(0);
 // s.onMsg = (data: any) => log.info(`onMsg`, data);
 // s.onAlert = (data: any) => log.info(`onAlert`, data);
 // s.onWarning = (data: any) => log.info(`onWarning`, data);
@@ -90,6 +91,9 @@ function onDanger(data: any) {
 }
 
 function sendEmail(data: any, type: string) {
+    console.log('data', data, type);
+
+    printTrace();
     let { reporter } = data;
     let emailData = {};
     if (reporter) {
