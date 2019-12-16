@@ -1,12 +1,17 @@
-// while (1 === 1) { }
 
+// while (1 === 1) { }
 import log from '../config/log';
 import * as email from './email';
 import { SystemReporter, OperatingSystemDetail } from './system-reporter';
 import * as pd from './db'
 import { config } from 'process';
 import { createEmail } from './email';
-import { secondToDayHoursMinutes, printTrace } from '../util';
+import { secondToDayHoursMinutes, printTrace, sleep } from '../util';
+
+console.log('config', config);
+// sleep(2000);
+// process.exit(0);
+
 pd.init();
 const db = pd.db;
 // pd.printAll();
@@ -34,9 +39,9 @@ process.on('message', function (m) {
 //process.exit(0);
 
 
-let onAlertEmail: boolean = config['ON_ALERT_EMAIL'] || false;
-let onWarningEmail: boolean = config['ON_WARNING_EMAIL'] || false;
-let onDangerEmail: boolean = config['ON_DANGER_EMAIL'] || false;
+let onAlertEmail: boolean = Boolean(process.env['ON_ALERT_EMAIL']);
+let onWarningEmail: boolean = Boolean(process.env['ON_WARNING_EMAIL']);
+let onDangerEmail: boolean = Boolean(process.env['ON_DANGER_EMAIL']);
 const s = new SystemReporter({
     // to check system in this internal seconds
     intervalSeconds: 5,
@@ -54,7 +59,7 @@ const s = new SystemReporter({
     },
     ramUtilizationSummaryDurationMinutes: 1
 }, db);
-process.exit(0);
+//process.exit(0);
 // s.onMsg = (data: any) => log.info(`onMsg`, data);
 // s.onAlert = (data: any) => log.info(`onAlert`, data);
 // s.onWarning = (data: any) => log.info(`onWarning`, data);
@@ -92,8 +97,7 @@ function onDanger(data: any) {
 
 function sendEmail(data: any, type: string) {
     console.log('data', data, type);
-
-    printTrace();
+    // printTrace();
     let { reporter } = data;
     let emailData = {};
     if (reporter) {

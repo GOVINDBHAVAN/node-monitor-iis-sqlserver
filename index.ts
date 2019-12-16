@@ -1,14 +1,19 @@
 import * as child from 'child_process';
 import { createEmail } from './routines/email';
 import { config } from 'process';
-import { env } from './config/config';
+import cfg from './config/config';
+
+console.log('main cfg', cfg);
 
 //const args = ['--inspect=9228', '--debug-brk'];
+//const args = ['--debug-brk'];
 //this is working debugging in windows
-const args = ['--inspect=9228'];
+const args = ['--inspect-brk=9229'];
+//const args = [];
 let reporter: child.ChildProcess = child.fork(__dirname + '/routines/index-reporter', [], { stdio: 'pipe', execArgv: args, env: process.env });
+//let reporter: child.ChildProcess = child.fork(__dirname + '/routines/index-reporter', [], { stdio: 'pipe' });
 reporter.stdout.pipe(process.stdout)
-process.on('exit', () => reporter.send('exit'));
+//process.on('exit', () => reporter.send('exit'));
 
 // let email = createEmail();
 // email.send({

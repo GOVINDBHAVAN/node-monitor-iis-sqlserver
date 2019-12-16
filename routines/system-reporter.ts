@@ -43,9 +43,10 @@ export class SystemReporter extends BaseReporter {
             this.sysInfo.operatingSystem = os.oos().name;
             this.sysInfo.platform = os.platform().toString();
             this.sysInfo.hostname = os.hostname();
-            this.sysInfo.ip = os.ip();
             this.sysInfo.type = os.type();
             this.sysInfo.arch = os.arch();
+            // it gives length error
+            this.sysInfo.ip = os.ip();
         } catch (err) { log.error(err); }
     }
     async checkMem(): Promise<void> {
