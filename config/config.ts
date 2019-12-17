@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { printTrace } from '../util';
 // to load variables from .env file into process.env
 // import * as dotenv from "dotenv";
 export const env = process.env.NODE_ENV || 'development';
@@ -8,7 +9,8 @@ export const env = process.env.NODE_ENV || 'development';
 
 
 const filePath = path.join(path.resolve(__dirname, "../config/config.json"));
-console.log(filePath);
+// console.log(filePath);
+// printTrace();
 
 const cfg = updateProcessEnv(filePath);
 if (!cfg) {

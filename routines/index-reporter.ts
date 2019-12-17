@@ -8,13 +8,13 @@ import { config } from 'process';
 import { createEmail } from './email';
 import { secondToDayHoursMinutes, printTrace, sleep } from '../util';
 
-console.log('config', config);
+//console.log('process.env', process.env);
 // sleep(2000);
 // process.exit(0);
 
 pd.init();
 const db = pd.db;
-// pd.printAll();
+//pd.printAll();
 // db.find({
 //     selector: {
 //         tag: 'avg_mem'
@@ -39,9 +39,11 @@ process.on('message', function (m) {
 //process.exit(0);
 
 
+
 let onAlertEmail: boolean = Boolean(process.env['ON_ALERT_EMAIL']);
 let onWarningEmail: boolean = Boolean(process.env['ON_WARNING_EMAIL']);
 let onDangerEmail: boolean = Boolean(process.env['ON_DANGER_EMAIL']);
+console.log('before');
 const s = new SystemReporter({
     // to check system in this internal seconds
     intervalSeconds: 5,
@@ -59,6 +61,7 @@ const s = new SystemReporter({
     },
     ramUtilizationSummaryDurationMinutes: 1
 }, db);
+console.log('after');
 //process.exit(0);
 // s.onMsg = (data: any) => log.info(`onMsg`, data);
 // s.onAlert = (data: any) => log.info(`onAlert`, data);

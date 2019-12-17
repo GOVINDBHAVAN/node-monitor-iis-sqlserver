@@ -21,9 +21,15 @@ export class SystemReporter extends BaseReporter {
         this.syncCheckOSDetails();
     }
     check(): void {
+        console.log('check start');
         this.checkCpu();
+        console.log('cpu');
         this.checkDisk();
+        console.log('disk');
         this.checkMem();
+        console.log('mem');
+        console.log('check end');
+
     }
     systemInformation(): string {
         let rtn = JSON.stringify(this.sysInfo);
@@ -32,21 +38,22 @@ export class SystemReporter extends BaseReporter {
     /** Sync function to fetch OS details */
     syncCheckOSDetails() {
         this.sysInfo = new OperatingSystemDetail();
+        return;
+        // try {
+        //     if (oscmd) {
+        //         oscmd.whoami().then(userName => {
+        //             this.sysInfo.userName = userName // admin
+        //         });
+        //     }
+        // } catch (err) { log.error(err); }
         try {
-            if (oscmd) {
-                oscmd.whoami().then(userName => {
-                    this.sysInfo.userName = userName // admin
-                });
-            }
-        } catch (err) { log.error(err); }
-        try {
-            this.sysInfo.operatingSystem = os.oos().name;
+            // this.sysInfo.operatingSystem = os.oos().name;
             this.sysInfo.platform = os.platform().toString();
-            this.sysInfo.hostname = os.hostname();
-            this.sysInfo.type = os.type();
-            this.sysInfo.arch = os.arch();
+            // this.sysInfo.hostname = os.hostname();
+            // this.sysInfo.type = os.type();
+            // this.sysInfo.arch = os.arch();
             // it gives length error
-            this.sysInfo.ip = os.ip();
+            //this.sysInfo.ip = os.ip();
         } catch (err) { log.error(err); }
     }
     async checkMem(): Promise<void> {
@@ -135,6 +142,7 @@ export class SystemReporter extends BaseReporter {
     }
     checkCpu(): void {
         try {
+            console.log('this.sysInfo', this.sysInfo, os.uptime());
             this.sysInfo.uptimeSeconds = os.uptime();
         } catch (err) { log.error(err); }
         if (this.config.cpuAvgLoadTime) {
@@ -144,14 +152,21 @@ export class SystemReporter extends BaseReporter {
             const { info, warning, danger } = this.config.cpuAvgLoadTime;
             const type = 'cpu';
             let done = false;
+            console.log(cpu.loadavgTime(danger.interval));
+
             //TODO it is not working in Windows returning 0
             if (!done && danger) { done = this.internalCheckAndFire(danger, type, NotificationEventType.DANGER, cpu.loadavgTime(danger.interval)); }
+
             if (!done && warning) { done = this.internalCheckAndFire(warning, type, NotificationEventType.WARNING, cpu.loadavgTime(warning.interval)); }
             if (!done && info) { done = this.internalCheckAndFire(info, type, NotificationEventType.ALERT, cpu.loadavgTime(info.interval)); }
         }
+        console.log('cpu end');
+
     }
 
     private saveInDB(data: any) {
+        console.log('saveindb start');
+
         const doc = {
             //_id: new Date().toISOString(), ...data
             //it won't be unique date, TODO
@@ -162,6 +177,7 @@ export class SystemReporter extends BaseReporter {
             log.error(err);
             console.error(err);
         });
+        console.log('saveindb end');
     }
     private internalCheckAndFire(input: InputUnit, type: string, eventType: NotificationEventType, result?: number
         , reverse?: boolean
@@ -185,8 +201,10 @@ export class SystemReporter extends BaseReporter {
             const data = { notification: 'alert', type, result, threshold: input.threshold, eventTypeString, furtherDetail };
             this.saveInDB(data);
             this.checkAndRaiseEvent({ type, eventType, data, reporter: this });
+            console.log('return');
             return true;
         }
+        console.log('return');
         return false;
     }
 }

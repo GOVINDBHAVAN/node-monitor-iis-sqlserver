@@ -1,6 +1,7 @@
 import { env } from './config/config';
 import { v4 as uuid } from 'uuid';
-
+import inspector from 'inspector';
+import * as child from 'child_process';
 export const isdev: boolean = env == 'development';
 
 /** Generate GUID v4 */
@@ -37,4 +38,25 @@ export function secondToDayHoursMinutes(seconds) {
 
 export function printTrace() {
     console.log(new Error().stack);
+}
+
+// export let debug = typeof v8debug === 'object' || /--debug|--inspect/.test(process.execArgv.join(' '));
+export function debuggerAttached() {
+    return (inspector.url() !== undefined);
+}
+
+export function forkChild(relativePath: string) {
+    //const args = ['--inspect=9228', '--debug-brk'];
+    //const args = ['--debug-brk'];
+    //this is working debugging in windows
+    //const args = ['--inspect-brk=9229'];
+    let args = [];
+    if (debuggerAttached()) {
+        args = ['--debug-brk'];
+        // const args = ['--inspect-brk=9229'];
+        //const args = ['--inspect'];
+    }
+    let p: child.ChildProcess = child.fork(__dirname + relativePath
+        , [], { stdio: 'pipe', execArgv: args, env: process.env });
+    return p;
 }
