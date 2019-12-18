@@ -45,18 +45,30 @@ export function debuggerAttached() {
     return (inspector.url() !== undefined);
 }
 
-export function forkChild(relativePath: string) {
+export function forkChild(relativePath: string, setPipe: boolean = true) {
     //const args = ['--inspect=9228', '--debug-brk'];
     //const args = ['--debug-brk'];
     //this is working debugging in windows
     //const args = ['--inspect-brk=9229'];
     let args = [];
     if (debuggerAttached()) {
-        args = ['--debug-brk'];
-        // const args = ['--inspect-brk=9229'];
+        // it will give Child process exited with code 9 error
+        //args = ['--debug-brk'];
+        // working on child debug on windows
+        args = ['--inspect-brk=9999'];
+        // not running
+        // args = ['--inspect-brk=0'];
+        // it will give Child process exited with code 12 error
+        //args = ['--inspect-brk=nnnn'];
         //const args = ['--inspect'];
+        //args = ['--harmony'];
+        //args = ['--debug-brk'];
     }
     let p: child.ChildProcess = child.fork(__dirname + relativePath
         , [], { stdio: 'pipe', execArgv: args, env: process.env });
+    if (setPipe) {
+        p.stdout.pipe(process.stdout)
+        process.stdin.pipe(p.stdin);
+    }
     return p;
 }

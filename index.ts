@@ -12,23 +12,24 @@ import { forkChild, sleep } from './util';
 // const args = [];
 //let reporter: child.ChildProcess = child.fork(__dirname + '/routines/index-reporter', [], { stdio: 'pipe', execArgv: args, env: process.env });
 //let reporter: child.ChildProcess = child.fork(__dirname + '/routines/index-reporter', [], { stdio: 'pipe' });
-let reporter = forkChild('/routines/index-reporter');
-reporter.stdout.pipe(process.stdout)
-process.stdin.pipe(reporter.stdin);
-reporter.send('start');
+//let reporter = forkChild('/routines/index-reporter');
+// let another = forkChild('/routines/dummy');
+// let another2 = forkChild('/routines/dummy');
+//no need of this
+//reporter.send('start');
 //sleep(1000);
 //process.on('exit', () => reporter.send('exit'));
 
-reporter.on('exit', (code) => {
-    console.log(`Child process exited with code ${code}`);
-});
+// reporter.on('exit', (code) => {
+//     console.log(`Child process exited with code ${code}`);
+// });
 
-process.on('beforeExit', function () {
-    setTimeout(function () { //run async code
-        console.log('beforeExit')
-        process.exit(0);  //exit manually
-    }, 1000);
-});
+// process.on('beforeExit', function () {
+//     setTimeout(function () { //run async code
+//         console.log('beforeExit')
+//         process.exit(0);  //exit manually
+//     }, 1000);
+// });
 
 // let email = createEmail();
 // email.send({
