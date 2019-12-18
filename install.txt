@@ -42,4 +42,4 @@ npm install moment
 
 
 
-npm i why-is-node-running -g
+npm i why-is-node-running --save
