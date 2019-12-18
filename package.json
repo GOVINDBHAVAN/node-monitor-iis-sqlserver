@@ -31,6 +31,7 @@
     "pouchdb": "^7.1.1",
     "pouchdb-find": "^7.1.1",
     "pug": "^2.0.4",
+    "why-is-node-running": "^2.1.0",
     "winston": "^3.2.1",
     "winston-daily-rotate-file": "^4.3.0"
   },

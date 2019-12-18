@@ -41,3 +41,5 @@ npm install moment
 # npm install --dev-save @types/dotenv
 
 
+
+npm i why-is-node-running -g
