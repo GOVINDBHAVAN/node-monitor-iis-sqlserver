@@ -62,8 +62,8 @@ export interface NotificationType {
     eventType: NotificationEventType;
     /** data related to event */
     data: any;
-    /** Instance of reporter to fetch further detail */
-    reporter: BaseReporter;
+    /** Instance of SystemInformation to fetch further detail */
+    moreData: any;
 }
 
 

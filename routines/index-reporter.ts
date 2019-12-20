@@ -101,10 +101,10 @@ function onDanger(data: any) {
 function sendEmail(data: any, type: string) {
     console.log('data', data, type);
     // printTrace();
-    let { reporter } = data;
+    let { moreData } = data;
     let emailData = {};
-    if (reporter) {
-        let sysInfo = reporter.sysInfo as OperatingSystemDetail;
+    if (moreData) {
+        let sysInfo = moreData as OperatingSystemDetail;
         emailData = {
             ...emailData,
             ...sysInfo,

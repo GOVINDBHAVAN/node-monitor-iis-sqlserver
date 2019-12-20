@@ -1,17 +1,17 @@
-const why = require('why-is-node-running') // should be your first require
+//const why = require('why-is-node-running') // should be your first require
 // import { createEmail } from './routines/email';
 // import { config } from 'process';
 // import cfg from './config/config';
 import { forkChild, sleep } from './util';
 
-function checkPending() {
-    let x = 5;  // 5 Seconds
+// function checkPending() {
+//     let x = 5;  // 5 Seconds
 
-    // Do your thing here
-    why();
+//     // Do your thing here
+//     why();
 
-    setTimeout(checkPending, x * 1000);
-}
+//     setTimeout(checkPending, x * 1000);
+// }
 //console.log('main cfg', cfg);
 
 //const args = ['--inspect=9228', '--debug-brk'];
@@ -21,15 +21,14 @@ function checkPending() {
 // const args = [];
 //let reporter: child.ChildProcess = child.fork(__dirname + '/routines/index-reporter', [], { stdio: 'pipe', execArgv: args, env: process.env });
 //let reporter: child.ChildProcess = child.fork(__dirname + '/routines/index-reporter', [], { stdio: 'pipe' });
-//let reporter = forkChild('/routines/index-reporter');
-let another = forkChild('/routines/dummy', false);
-// let another2 = forkChild('/routines/dummy');
+let reporter = forkChild('/routines/index-reporter');
+//let reporter = forkChild('/routines/dummy', false);
 //no need of this
 //reporter.send('start');
 //sleep(1000);
 //process.on('exit', () => reporter.send('exit'));
 
-another.on('exit', (code) => {
+reporter.on('exit', (code) => {
     console.log(`Child process exited with code ${code}`);
 });
 
@@ -40,7 +39,7 @@ process.on('beforeExit', function () {
     }, 1000);
 });
 
-checkPending();
+//checkPending();
 
 // let email = createEmail();
 // email.send({
