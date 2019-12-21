@@ -6,7 +6,7 @@ import { SystemReporter, OperatingSystemDetail } from './system-reporter';
 import * as pd from './db'
 import { config } from 'process';
 import { createEmail } from './email';
-import { secondToDayHoursMinutes, printTrace, sleep } from '../util';
+import { secondToDayHoursMinutes, printTrace, sleep, dateDiff } from '../util';
 
 //console.log('process.env', process.env);
 // sleep(2000);
@@ -41,12 +41,13 @@ process.on('message', function (m) {
 
 
 let onAlertEmail: boolean = Boolean(process.env['ON_ALERT_EMAIL']);
+let emailAlertDurationMinutes: number = Number(process.env['EMAIL_ALERT_DURATION_MINUTES'] || 15);
+let systemReporterCheckIntervalSeconds: number = Number(process.env['SYSTEM_REPORTER_CHECK_INTERVAL_SECONDS'] || 5);
 let onWarningEmail: boolean = Boolean(process.env['ON_WARNING_EMAIL']);
 let onDangerEmail: boolean = Boolean(process.env['ON_DANGER_EMAIL']);
-console.log('before');
 const s = new SystemReporter({
     // to check system in this internal seconds
-    intervalSeconds: 5,
+    intervalSeconds: systemReporterCheckIntervalSeconds,
     cpuAvgLoadTime: {
         // interval is avg seconds
         info: { interval: 1, threshold: 1 },
@@ -61,21 +62,20 @@ const s = new SystemReporter({
     },
     ramUtilizationSummaryDurationMinutes: 1
 }, db);
-console.log('after');
 //process.exit(0);
 // s.onMsg = (data: any) => log.info(`onMsg`, data);
 // s.onAlert = (data: any) => log.info(`onAlert`, data);
 // s.onWarning = (data: any) => log.info(`onWarning`, data);
 // s.onDanger = (data: any) => log.info(`onDanger`, data);
 
-s.onMsg = (data: any) => log.info(`onMsg`, data);
+//s.onMsg = (data: any) => log.info(`onMsg`, data);
 s.onAlert = (data: any) => onAlert(data);
 s.onWarning = (data: any) => onWarning(data);
 s.onDanger = (data: any) => onDanger(data);
 
 
 function onAlert(data: any) {
-    log.info(`onAlert`, data);
+    // log.info(`onAlert`, data);
     // at member variable it is not getting value.
     if (!onAlertEmail) {
         return;
@@ -83,23 +83,42 @@ function onAlert(data: any) {
     sendEmail(data, 'alert');
 }
 function onWarning(data: any) {
-    log.info(`onWarning`, data);
+    // log.info(`onWarning`, data);
     //TODO unable to pass CONFIG/PROCESS ENV to child process
-    // if (!onWarningEmail) {
-    //     return;
-    // }
+    if (!onWarningEmail) {
+        return;
+    }
     sendEmail(data, 'warning');
 }
 function onDanger(data: any) {
-    log.info(`onDanger`, data);
-    // if (!onDangerEmail) {
-    //     return;
-    // }
+    // log.info(`onDanger`, data);
+    if (!onDangerEmail) {
+        return;
+    }
     sendEmail(data, 'danger');
 }
 
+// let lastEmailSendDic = new Dictionary();    // { [id: string]: Date };
+let lastEmailSendDic: { [key: string]: Date; } = {};
+
 function sendEmail(data: any, type: string) {
-    console.log('data', data, type);
+    let lastEmailSend = new Date();
+    let key = `${type}_last_email_send`;
+    let exists = lastEmailSendDic[key] != undefined;
+    if (exists) {
+        lastEmailSend = lastEmailSendDic[key];
+    }
+    console.log(`${lastEmailSend} and lastEmailSendDic`, lastEmailSendDic);
+
+    let now = new Date();
+    let duration = dateDiff(lastEmailSend, now);
+    console.log(`${type} duration.minutes`, duration);
+
+    if (exists && duration.minutes < emailAlertDurationMinutes) {
+        console.log(`last ${type} email sent ${duration.minutes} minutes ago, no need to send now`);
+        return;
+    }
+    // console.log('data', data, type);
     // printTrace();
     let { moreData } = data;
     let emailData = {};
@@ -111,7 +130,7 @@ function sendEmail(data: any, type: string) {
             uptime: secondToDayHoursMinutes(sysInfo.uptimeSeconds)
         };
     }
-    console.log('sending email', emailData, data);
+    // console.log('sending email', emailData, data);
 
     let email = createEmail();
     email.send({
@@ -122,8 +141,12 @@ function sendEmail(data: any, type: string) {
         },
         locals: emailData
     })
-        .then(console.log)
+        .then(() => {
+            console.log(`${type} email sent on`, now);
+            lastEmailSendDic[key] = now;
+        })
         .catch(console.error);
+
 }
 
 

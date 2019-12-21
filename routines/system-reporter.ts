@@ -120,7 +120,7 @@ export class SystemReporter extends BaseReporter {
                 store._id = guid();
                 // store the overvall data for reporting
                 upsert(store);
-                log.info(store.tag, this.ms);
+                //log.info(store.tag, this.ms);
                 this.ms.reset();
             }
             await upsert(this.ms);

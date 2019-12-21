@@ -20,7 +20,7 @@ export function dateDiff(start, end) {
     let days = Math.floor(milliseconds / 86400000); // days
     let hours = Math.floor((milliseconds % 86400000) / 3600000); // hours
     let minutes = Math.round(((milliseconds % 86400000) % 3600000) / 60000); // minutes
-    return { days, hours, minutes, milliseconds };
+    return { days, hours, minutes, seconds: Math.floor(milliseconds / 1000), milliseconds };
 }
 
 export function secondToDayHoursMinutes(seconds) {

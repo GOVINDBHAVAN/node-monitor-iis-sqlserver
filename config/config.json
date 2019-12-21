@@ -6,12 +6,16 @@
         "PORT": 3000,
         "ON_ALERT_EMAIL": true,
         "ON_WARNING_EMAIL": true,
-        "ON_DANGER_EMAIL": true
+        "ON_DANGER_EMAIL": true,
+        "EMAIL_ALERT_DURATION_MINUTES": 1,
+        "SYSTEM_REPORTER_CHECK_INTERVAL_SECONDS": 10
     },
     "production": {
         "PORT": 3000,
         "ON_ALERT_EMAIL": false,
         "ON_WARNING_EMAIL": true,
-        "ON_DANGER_EMAIL": true
+        "ON_DANGER_EMAIL": true,
+        "EMAIL_ALERT_DURATION_MINUTES": 15,
+        "SYSTEM_REPORTER_CHECK_INTERVAL_SECONDS": 10
     }
 }
