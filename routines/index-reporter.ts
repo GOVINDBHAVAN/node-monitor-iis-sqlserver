@@ -51,10 +51,12 @@ const s = new SystemReporter({
     // to check system in this internal seconds
     intervalSeconds: systemReporterCheckIntervalSeconds,
     cpuAvgLoadTime: {
-        // interval is avg seconds
+        // last 1 min load time to check for info
         info: { interval: 1, threshold: 1 },
+        // last 5 min load time to check for warning
         warning: { interval: 5, threshold: 3 },
-        danger: { interval: 10, threshold: 6 }
+        // last 15 min load time to check for danger
+        danger: { interval: 15, threshold: 6 }
     },
     freeMemPercentage: {
         // if less then 41% then warning

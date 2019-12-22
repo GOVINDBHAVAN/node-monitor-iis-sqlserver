@@ -119,6 +119,7 @@ export class SystemReporter extends BaseReporter {
             let done = false;
 
             //TODO it is not working in Windows returning 0
+            // duration supported are: last 1, 5 and 15 minutes
             if (!done && danger) { done = this.internalCheckAndFire(danger, type, NotificationEventType.DANGER, cpu.loadavgTime(danger.interval)); }
             if (!done && warning) { done = this.internalCheckAndFire(warning, type, NotificationEventType.WARNING, cpu.loadavgTime(warning.interval)); }
             if (!done && info) { done = this.internalCheckAndFire(info, type, NotificationEventType.ALERT, cpu.loadavgTime(info.interval)); }
