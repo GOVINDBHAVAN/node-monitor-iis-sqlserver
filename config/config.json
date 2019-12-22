@@ -4,7 +4,7 @@
     },
     "development": {
         "PORT": 3000,
-        "ON_ALERT_EMAIL": true,
+        "ON_ALERT_EMAIL": false,
         "ON_WARNING_EMAIL": true,
         "ON_DANGER_EMAIL": true,
         "EMAIL_NOTIFICATION_DURATION_MINUTES": 2,

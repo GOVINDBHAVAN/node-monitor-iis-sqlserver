@@ -9,7 +9,6 @@ import { createEmail } from './email';
 import { secondToDayHoursMinutes, printTrace, sleep, dateDiff, dateToString } from '../util';
 import moment from 'moment';
 import { OperatingSystemDetail } from './reporter';
-import { nullLiteral } from 'babel-types';
 
 //console.log('process.env', process.env);
 // sleep(2000);
@@ -83,7 +82,7 @@ function onAlert(data: any) {
     if (!onAlertEmail) {
         return;
     }
-    sendEmail(data, 'alert');
+    sendEmail(data);
 }
 function onWarning(data: any) {
     // log.info(`onWarning`, data);
@@ -91,22 +90,50 @@ function onWarning(data: any) {
     if (!onWarningEmail) {
         return;
     }
-    sendEmail(data, 'warning');
+    sendEmail(data);
 }
 function onDanger(data: any) {
     // log.info(`onDanger`, data);
     if (!onDangerEmail) {
         return;
     }
-    sendEmail(data, 'danger');
+    sendEmail(data);
 }
 
 // let lastEmailSendDic = new Dictionary();    // { [id: string]: Date };
 let lastEmailSendDic: { [key: string]: Date; } = {};
+// nested dictionary
+let emailDataForTag: { [key: string]: { [key: string]: any; }; } = {};
 
-function sendEmail(data: any, type: string) {
+function getTagForKey(type: string) {
+    switch (type.toLocaleLowerCase()) {
+        case "mem": case "cpu": case "disk": {
+            return "Operating System";
+        }
+    }
+    return type;
+}
+
+function getEmailData(tagForKey: string, type: string) {
+    let data = emailDataForTag[tagForKey];
+    if (!data) return null;
+    let typeData = data[type];
+    if (!typeData) return null;
+    return typeData;
+}
+
+function addEmailData(tagForKey: string, type: string, data: any) {
+    if (!emailDataForTag[tagForKey]) {
+        emailDataForTag[tagForKey] = {};
+    }
+    emailDataForTag[tagForKey][type] = data;
+}
+
+function sendEmail(data: any) {
+    let type: string = data.data.type;
+    let tagForKey = getTagForKey(type);
     let lastEmailSend = new Date();
-    let key = `${type}_last_email_send`;
+    let key = `${tagForKey}_last_email_send`;
     let exists = lastEmailSendDic[key] != undefined;
     if (exists) {
         lastEmailSend = lastEmailSendDic[key];
@@ -119,6 +146,9 @@ function sendEmail(data: any, type: string) {
     let duration = dateDiff(lastEmailSend, now);
     // console.log(`${type} duration.minutes`, duration);
 
+    // add data in queue for sending single email
+    addEmailData(tagForKey, type, data);
+
     if (exists && duration.minutes < emailNotificationDurationMinutes) {
         console.log(`last ${type} email sent ${duration.minutes} minutes ago, no need to send now`);
         return;
@@ -126,23 +156,52 @@ function sendEmail(data: any, type: string) {
     // console.log('data', data, type);
 
     // printTrace();
+    console.log('tagForKey', tagForKey);
+
+    let dataForEmail = {};
+    if (tagForKey.toLocaleLowerCase() === 'operating system') {
+        let cpu = getEmailData(tagForKey, 'cpu');
+        let mem = getEmailData(tagForKey, 'mem');
+        let disk = getEmailData(tagForKey, 'disk');
+        if (!cpu || !mem) {
+            // wait for the cpu and mem data, then send single email.
+            return;
+        }
+        let subjectType = '';
+        if (cpu.data.eventTypeString == 'danger' || mem.data.eventTypeString == 'danger') {
+            subjectType = 'danger';
+        }
+        else if (cpu.data.eventTypeString == 'warning' || mem.data.eventTypeString == 'warning') {
+            subjectType = 'warning';
+        }
+        else {
+            subjectType = 'alert';
+        }
+        dataForEmail = { subjectType, cpu: cpu.data, mem: mem.data, disk: (disk ? disk.data : null) };
+        console.log('dataForEmail', dataForEmail);
+
+    }
+
+    console.log('dataForEmail', dataForEmail);
+
     let { sysInfo }: { sysInfo: OperatingSystemDetail } = data;
     let emailData = {
         uptime: null,
         ...data.data,
-        cpu: {
-            notification: 'a', result: 'r', threshold: 't'
-        },
-        mem: {
-            notification: 'a', result: 'r', threshold: 't'
-        },
+        ...dataForEmail,
+        // cpu: {
+        //     notification: 'a', result: 'r', threshold: 't'
+        // },
+        // mem: {
+        //     notification: 'a', result: 'r', threshold: 't'
+        // },
         now: moment(data.now).format('DD-MMM-YYYY h:mm:ss a')
     };
     if (sysInfo) {
         emailData = {
             ...emailData,
-            ...sysInfo,
-            uptime: secondToDayHoursMinutes(sysInfo.uptimeSeconds)
+            os: sysInfo,
+            uptime: JSON.stringify(secondToDayHoursMinutes(sysInfo.uptimeSeconds))
         };
     }
     console.log('sending email', emailData);
@@ -159,6 +218,7 @@ function sendEmail(data: any, type: string) {
         .then(() => {
             console.log(`${type} email sent on`, now);
             lastEmailSendDic[key] = now;
+            emailDataForTag[tagForKey] = null; //clear old last data of different types (cpu,ram) as these are sent now.
         })
         .catch(console.error);
 

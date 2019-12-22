@@ -71,7 +71,7 @@ export interface NotificationType {
 /** Operating system related details */
 export class OperatingSystemDetail {
     userName: string;
-    operatingSystem: string;
+    //operatingSystem: string;
     platform: string;
     hostname: string;
     ip: string;
