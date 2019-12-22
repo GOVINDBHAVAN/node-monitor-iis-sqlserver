@@ -2,11 +2,14 @@
 // while (1 === 1) { }
 import log from '../config/log';
 import * as email from './email';
-import { SystemReporter, OperatingSystemDetail } from './system-reporter';
+import { SystemReporter } from './system-reporter';
 import * as pd from './db'
 import { config } from 'process';
 import { createEmail } from './email';
-import { secondToDayHoursMinutes, printTrace, sleep, dateDiff } from '../util';
+import { secondToDayHoursMinutes, printTrace, sleep, dateDiff, dateToString } from '../util';
+import moment from 'moment';
+import { OperatingSystemDetail } from './reporter';
+import { nullLiteral } from 'babel-types';
 
 //console.log('process.env', process.env);
 // sleep(2000);
@@ -41,7 +44,7 @@ process.on('message', function (m) {
 
 
 let onAlertEmail: boolean = Boolean(process.env['ON_ALERT_EMAIL']);
-let emailAlertDurationMinutes: number = Number(process.env['EMAIL_ALERT_DURATION_MINUTES'] || 15);
+let emailNotificationDurationMinutes: number = Number(process.env['EMAIL_NOTIFICATION_DURATION_MINUTES'] || 15);
 let systemReporterCheckIntervalSeconds: number = Number(process.env['SYSTEM_REPORTER_CHECK_INTERVAL_SECONDS'] || 5);
 let onWarningEmail: boolean = Boolean(process.env['ON_WARNING_EMAIL']);
 let onDangerEmail: boolean = Boolean(process.env['ON_DANGER_EMAIL']);
@@ -108,29 +111,41 @@ function sendEmail(data: any, type: string) {
     if (exists) {
         lastEmailSend = lastEmailSendDic[key];
     }
-    console.log(`${lastEmailSend} and lastEmailSendDic`, lastEmailSendDic);
+    // console.log(`${lastEmailSend} and lastEmailSendDic`, lastEmailSendDic);
 
     let now = new Date();
-    let duration = dateDiff(lastEmailSend, now);
-    console.log(`${type} duration.minutes`, duration);
+    // console.log(`lastEmailSend: `, dateToString(lastEmailSend));
 
-    if (exists && duration.minutes < emailAlertDurationMinutes) {
+    let duration = dateDiff(lastEmailSend, now);
+    // console.log(`${type} duration.minutes`, duration);
+
+    if (exists && duration.minutes < emailNotificationDurationMinutes) {
         console.log(`last ${type} email sent ${duration.minutes} minutes ago, no need to send now`);
         return;
     }
     // console.log('data', data, type);
+
     // printTrace();
-    let { moreData } = data;
-    let emailData = {};
-    if (moreData) {
-        let sysInfo = moreData as OperatingSystemDetail;
+    let { sysInfo }: { sysInfo: OperatingSystemDetail } = data;
+    let emailData = {
+        uptime: null,
+        ...data.data,
+        cpu: {
+            notification: 'a', result: 'r', threshold: 't'
+        },
+        mem: {
+            notification: 'a', result: 'r', threshold: 't'
+        },
+        now: moment(data.now).format('DD-MMM-YYYY h:mm:ss a')
+    };
+    if (sysInfo) {
         emailData = {
             ...emailData,
             ...sysInfo,
             uptime: secondToDayHoursMinutes(sysInfo.uptimeSeconds)
         };
     }
-    // console.log('sending email', emailData, data);
+    console.log('sending email', emailData);
 
     let email = createEmail();
     email.send({

@@ -1,10 +1,10 @@
 import { BaseReporter, Config, AlertInput, NotificationType, NotificationEventType, InputUnit } from './reporter'
-import { cpu, drive, mem, oscmd, os } from 'node-os-utils';
-import log from '../config/log';
 import { info } from 'winston';
 import { dateDiff, guid } from '../util';
+import { cpu, drive, mem, os } from 'node-os-utils';
 import to from './to';
 import { upsert, first } from './db';
+import log from '../config/log';
 
 export class SystemReporter extends BaseReporter {
 
@@ -12,42 +12,18 @@ export class SystemReporter extends BaseReporter {
     config: SystemReporterConfig;
     db: PouchDB.Database;
     ms: MemorySummary;
-    sysInfo: OperatingSystemDetail;
+
     constructor(config: SystemReporterConfig, db: PouchDB.Database) {
         super(config);
         this.db = db;
         this.config = config;
         this.ms = new MemorySummary();
-        this.syncCheckOSDetails();
     }
     check(): void {
+        this.checkSystemUptime();
         this.checkCpu();
         this.checkDisk();
         this.checkMem();
-    }
-    systemInformation(): string {
-        let rtn = JSON.stringify(this.sysInfo);
-        return rtn;
-    }
-    /** Sync function to fetch OS details */
-    syncCheckOSDetails() {
-        this.sysInfo = new OperatingSystemDetail();
-        // try {
-        //     if (oscmd) {
-        //         oscmd.whoami().then(userName => {
-        //             this.sysInfo.userName = userName // admin
-        //         });
-        //     }
-        // } catch (err) { log.error(err); }
-        try {
-            // this.sysInfo.operatingSystem = os.oos().name;
-            this.sysInfo.platform = os.platform().toString();
-            this.sysInfo.hostname = os.hostname();
-            this.sysInfo.type = os.type();
-            this.sysInfo.arch = os.arch();
-            //it gives length error
-            //this.sysInfo.ip = os.ip();
-        } catch (err) { log.error(err); }
     }
     async checkMem(): Promise<void> {
         /* { all in MB
@@ -134,9 +110,6 @@ export class SystemReporter extends BaseReporter {
         //     })
     }
     checkCpu(): void {
-        try {
-            this.sysInfo.uptimeSeconds = os.uptime();
-        } catch (err) { log.error(err); }
         if (this.config.cpuAvgLoadTime) {
             // use "top" command to cross check the result
             // execute this command to create fake load: "stress --cpu 3"  (linux)
@@ -187,22 +160,11 @@ export class SystemReporter extends BaseReporter {
         ) {
             const data = { notification: 'alert', type, result, threshold: input.threshold, eventTypeString, furtherDetail };
             this.saveInDB(data);
-            this.checkAndRaiseEvent({ type, eventType, data, moreData: this.sysInfo });
+            this.checkAndRaiseEvent({ now: new Date(), type, eventType, data, sysInfo: BaseReporter.sysInfo });
             return true;
         }
         return false;
     }
-}
-/** Operating system related details */
-export class OperatingSystemDetail {
-    userName: string;
-    operatingSystem: string;
-    platform: string;
-    hostname: string;
-    ip: string;
-    type: string;
-    arch: string;
-    uptimeSeconds: number;
 }
 /** To calculate RAM summary over the period of time */
 export class MemorySummary {

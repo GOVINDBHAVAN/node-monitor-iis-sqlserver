@@ -15,12 +15,31 @@ export async function sleep(milliseconds: number): Promise<void> {
     return;
 }
 
+export function dateToString(dt) {
+    let rtn = `${
+        (dt.getMonth() + 1).toString().padStart(2, '0')}/${
+        dt.getDate().toString().padStart(2, '0')}/${
+        dt.getFullYear().toString().padStart(4, '0')} ${
+        dt.getHours().toString().padStart(2, '0')}:${
+        dt.getMinutes().toString().padStart(2, '0')}:${
+        dt.getSeconds().toString().padStart(2, '0')}`
+    return rtn;
+}
+
 export function dateDiff(start, end) {
-    let milliseconds = (end - start); // milliseconds between end and start
-    let days = Math.floor(milliseconds / 86400000); // days
-    let hours = Math.floor((milliseconds % 86400000) / 3600000); // hours
-    let minutes = Math.round(((milliseconds % 86400000) % 3600000) / 60000); // minutes
-    return { days, hours, minutes, seconds: Math.floor(milliseconds / 1000), milliseconds };
+    // let milliseconds = (end - start); // milliseconds between end and start
+    // let days = Math.floor(milliseconds / 86400000); // days
+    // let hours = Math.floor((milliseconds % 86400000) / 3600000); // hours
+    // let minutes = Math.round(((milliseconds % 86400000) % 3600000) / 60000); // minutes
+    // wrong minutes
+    // return { days, hours, minutes, seconds: Math.floor(milliseconds / 1000), milliseconds };
+    let milliseconds = start > end ? start % end : end % start;
+    let seconds = Math.floor(milliseconds / 1000);
+    let minutes = Math.floor(seconds / 60);
+    let hours = Math.floor(minutes / 60);
+    let days = Math.floor(hours / 24);
+    let weeks = Math.floor(days / 7);
+    return { days, hours, minutes, seconds, milliseconds, weeks };
 }
 
 export function secondToDayHoursMinutes(seconds) {

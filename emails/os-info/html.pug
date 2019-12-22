@@ -1,7 +1,6 @@
-p Server #{hostname},
-
-p CPU #{cpu_notification}, #{cpu_result} / #{cpu_threshold} threshold
-p RAM #{mem_notification}, #{mem_result} / #{mem_threshold} threshold
+p Time: #{now}, Alert type: #{notification}, Hostname: #{hostname}, Type: #{type},
+p CPU #{cpu.notification}, #{cpu.result} / #{cpu.threshold} threshold
+p RAM #{mem.notification}, #{mem.result} / #{mem.threshold} threshold
 
 p Server Details:
 table(style='width:100%', border='1')

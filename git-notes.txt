@@ -15,3 +15,6 @@ git push --set-upstream origin master
 to overwrite local file with remote
 git checkout HEAD^ file/to/overwrite
 git pull
+
+rename file:
+git mv config.json couchdb.config.json
