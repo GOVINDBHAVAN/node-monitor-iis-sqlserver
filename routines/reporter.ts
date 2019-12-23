@@ -82,7 +82,9 @@ export class OperatingSystemDetail {
 
 export class BaseReporter extends EventEmitter implements Reporter {
     static sysInfo: OperatingSystemDetail;
-    constructor(public config: Config) {
+    static db: PouchDB.Database;
+
+    constructor(public config: Config, public db: PouchDB.Database) {
         super();
         this.on('data', (data: any) => this.onMsg(data));
         this.on('alert', (data: NotificationType) => this.onAlert(data));
@@ -138,6 +140,34 @@ export class BaseReporter extends EventEmitter implements Reporter {
         // console.log(`raise ${eventType}`, event);
         this.emit(eventType, event);
     }
+    protected internalCheckAndFire(input: InputUnit, type: string, eventType: NotificationEventType, result?: number
+        , reverse?: boolean
+        , furtherDetail?: {} | {}): boolean {
+        // log.info(`${type} ${NotificationEventType[eventType]} : ${result}`);
+        let eventTypeString = NotificationEventType[eventType].toString().toLowerCase();
+        console.log(`${type} eventType ${eventType} eventTypeString: ${eventTypeString}, result: ${result}, threshold: ${input.threshold}`);
+
+        if (result) {
+            this.saveInDB({
+                notification: 'log'
+                , type
+                , input
+                , result
+                , eventTypeString
+                , furtherDetail
+            });
+        }
+        if (result
+            && input.threshold
+            && (!reverse ? (result >= input.threshold) : (result < input.threshold))
+        ) {
+            const data = { notification: 'alert', type, result, threshold: input.threshold, eventTypeString, furtherDetail };
+            this.saveInDB(data);
+            this.checkAndRaiseEvent({ now: new Date(), type, eventType, data, sysInfo: BaseReporter.sysInfo });
+            return true;
+        }
+        return false;
+    }
     /**
     * Event occur when alert event occur
     */
@@ -151,4 +181,16 @@ export class BaseReporter extends EventEmitter implements Reporter {
     */
     onDanger(event: NotificationType): void { }
 
+    protected saveInDB(data: any) {
+        const doc = {
+            //_id: new Date().toISOString(), ...data
+            //it won't be unique date, TODO
+            time: new Date(), ...data
+        };
+        // console.log('save', doc);
+        this.db.post(doc).then().catch((err) => {
+            log.error(err);
+            console.error(err);
+        });
+    }
 }

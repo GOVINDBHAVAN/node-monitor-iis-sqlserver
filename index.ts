@@ -4,6 +4,12 @@
 // import cfg from './config/config';
 import { forkChild, sleep } from './util';
 
+// var pattern = /\d+\.?\d*|\.\d+/;
+// var match = pattern.exec("the number is 7.5!");
+
+// var start = match.index;
+// var text = match[0];
+// var end = start + text.length;
 
 // function checkPending() {
 //     let x = 5;  // 5 Seconds

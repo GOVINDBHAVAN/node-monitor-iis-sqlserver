@@ -9,6 +9,7 @@ import { createEmail } from './email';
 import { secondToDayHoursMinutes, printTrace, sleep, dateDiff, dateToString } from '../util';
 import moment from 'moment';
 import { OperatingSystemDetail } from './reporter';
+import { IISReporter } from './iis-reporter';
 
 //console.log('process.env', process.env);
 // sleep(2000);
@@ -47,7 +48,15 @@ let emailNotificationDurationMinutes: number = Number(process.env['EMAIL_NOTIFIC
 let systemReporterCheckIntervalSeconds: number = Number(process.env['SYSTEM_REPORTER_CHECK_INTERVAL_SECONDS'] || 5);
 let onWarningEmail: boolean = Boolean(process.env['ON_WARNING_EMAIL']);
 let onDangerEmail: boolean = Boolean(process.env['ON_DANGER_EMAIL']);
-const s = new SystemReporter({
+const iisReporter = new IISReporter({
+    intervalSeconds: systemReporterCheckIntervalSeconds,
+    executionSeconds: {
+        info: { interval: 10, threshold: 1 * 10000 },
+        warning: { interval: 60, threshold: 3 * 10000 },
+        danger: { interval: 60 * 10, threshold: 6 * 10000 }
+    }, appPoolsToCheck: null
+}, db);
+const sysReporter = new SystemReporter({
     // to check system in this internal seconds
     intervalSeconds: systemReporterCheckIntervalSeconds,
     cpuAvgLoadTime: {
@@ -73,9 +82,9 @@ const s = new SystemReporter({
 // s.onDanger = (data: any) => log.info(`onDanger`, data);
 
 //s.onMsg = (data: any) => log.info(`onMsg`, data);
-s.onAlert = (data: any) => onAlert(data);
-s.onWarning = (data: any) => onWarning(data);
-s.onDanger = (data: any) => onDanger(data);
+sysReporter.onAlert = (data: any) => onAlert(data);
+sysReporter.onWarning = (data: any) => onWarning(data);
+sysReporter.onDanger = (data: any) => onDanger(data);
 
 
 function onAlert(data: any) {
