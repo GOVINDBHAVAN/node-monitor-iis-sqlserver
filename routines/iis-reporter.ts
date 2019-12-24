@@ -1,6 +1,7 @@
 import { BaseReporter, Config, AlertInput, NotificationEventType, InputUnit } from './reporter'
 const { promises: fs } = require("fs");
-import parser from 'fast-xml-parser';
+import xml2js from 'xml2js';
+import _ from 'lodash';
 
 export class IISReporter extends BaseReporter {
 
@@ -97,13 +98,37 @@ export class IISReporter extends BaseReporter {
         try {
             //"/home/govind/Documents/projects/monitor/dist/routines"
             let xmlData = await fs.readFile(__dirname + '/../../prototypes/iisxml.xml', 'utf-8');
-            var jsonObj = parser.parse(xmlData);
-            console.log(jsonObj);
-            return jsonObj;
+            //var jsonObj = parser.parse(xmlData);
+            var parser = new xml2js.Parser(/* options */);
+            let json = await parser.parseStringPromise(xmlData);
+            console.log(json);
+            let requests = json.appcmd.REQUEST;
+
+            let obj = _.map(requests, r => {
+                let rtn = new IISRequestData();
+                let d = r.$;
+                rtn.appPoolName = d["APPPOOL.NAME"];
+                rtn.clientIP = d["ClientIP"];
+                rtn.timeMS = d["Time"];
+                rtn.url = d["Url"];
+                rtn.verb = d["Verb"];
+                return rtn;
+            });
+            console.log(obj);
+
+            return json;
         } catch (e) {
             console.log("e", e);
         }
     }
+}
+
+export class IISRequestData {
+    url: string;
+    clientIP: string;
+    timeMS: number;
+    appPoolName: string;
+    verb: string;
 }
 
 export interface IISReporterConfig extends Config {

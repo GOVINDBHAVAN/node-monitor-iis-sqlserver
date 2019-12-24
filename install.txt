@@ -46,4 +46,5 @@ npm i why-is-node-running --save
 
 npm i moment --save
 
-npm i fast-xml-parser
+npm install xml2js
+npm i lodash
