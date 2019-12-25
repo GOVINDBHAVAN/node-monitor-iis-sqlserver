@@ -51,10 +51,13 @@ let onDangerEmail: boolean = Boolean(process.env['ON_DANGER_EMAIL']);
 const iisReporter = new IISReporter({
     intervalSeconds: systemReporterCheckIntervalSeconds,
     executionSeconds: {
-        info: { interval: 10, threshold: 1 * 10000 },
-        warning: { interval: 60, threshold: 3 * 10000 },
-        danger: { interval: 60 * 10, threshold: 6 * 10000 }
-    }, appPoolsToCheck: null
+        // if requests execution exceeds 10 seconds then alert
+        info: { threshold: 10 },
+        // if requests execution exceeds 30 seconds then alert
+        warning: { threshold: 30 },
+        // if requests execution exceeds 120 seconds then alert
+        danger: { threshold: 120 }
+    }, appPoolsToCheck: ['/ozell/api/attendance/process', '/drbhattlab/api/attendance/process']
 }, db);
 const sysReporter = new SystemReporter({
     // to check system in this internal seconds

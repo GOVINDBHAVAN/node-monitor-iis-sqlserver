@@ -28,22 +28,23 @@ export class IISReporter extends BaseReporter {
      * True means current notificationEventType is executed and sent
      */
     async internalCheckIIS(notificationEventType: NotificationEventType, input?: InputUnit) {
-        if (!input || !input.interval) return false;
-        let eventTypeString = NotificationEventType[notificationEventType].toString().toLowerCase();
-        let seconds = input.interval;
-        if (!seconds || seconds <= 0) return false;
-        let result = await this.fetchIIS(seconds);
+        if (!input || !input.threshold) return false;
+        // let eventTypeString = NotificationEventType[notificationEventType].toString().toLowerCase();
+        let thresholdSeconds = input.threshold;
+        if (!thresholdSeconds || thresholdSeconds <= 0) return false;
+        let result = await this.fetchIIS(thresholdSeconds);
 
         const type = 'iis';
         let rtn = false;
         for (let i = 0; i < result.length; i++) {
             const r = result[i];
             let s = Math.trunc(r.timeMS / 1000);
-            if (s >= seconds) {
-                this.internalCheckAndFire(input, type, notificationEventType, s, true, { r });
+            if (s >= thresholdSeconds) {
+                this.internalCheckAndFire(input, type, notificationEventType, s, true, { r, 'unit': 'seconds' });
                 rtn = true;
             }
         }
+        return rtn;
     }
 
     async checkIIS(): Promise<void> {
@@ -123,57 +124,58 @@ export class IISReporter extends BaseReporter {
         //     await upsert(this.ms);
         // }
     }
-    async fetchIIS(seconds: number) {
+    async fetchIIS(thresholdSeconds: number) {
         try {
             //"/home/govind/Documents/projects/monitor/dist/routines"
-            let json = await this.getJsonData(seconds);
-            if (!json || !json.appcmd || !json.appcmd.REQUEST) return [];
-            console.log(json);
-            let requests = json.appcmd.REQUEST;
-
-            let obj = _.map(requests, r => {
-                let rtn = new IISRequestData();
-                let d = r.$;
-                rtn.appPoolName = d["APPPOOL.NAME"];
-                rtn.clientIP = d["ClientIp"];
-                rtn.timeMS = d["Time"];
-                rtn.url = d["Url"];
-                rtn.verb = d["Verb"];
-                return rtn;
-            });
-            console.log(obj);
+            let obj = await this.getJsonData(thresholdSeconds);
             return obj;
         } catch (e) {
             console.log("e", e);
         }
     }
 
-    private async getJsonData(seconds: number) {
+    private async getJsonData(thresholdSeconds: number) {
         if (this.loadDataFromServer) {
-            return this.filterData(this.internalGetJsonDataFromServer(seconds));
+            return this.filterData(await this.internalGetJsonDataFromServer(thresholdSeconds));
         }
         else {
-            return this.filterData(this.internalGetJsonDataFromFile(seconds));
+            return this.filterData(await this.internalGetJsonDataFromFile(thresholdSeconds));
         }
     }
-    private async filterData(json: any) {
+    private filterData(json: any) {
         if (!this.config.appPoolsToCheck || this.config.appPoolsToCheck.length <= 0) return json;
         var upperCaseNames = this.config.appPoolsToCheck.map(function (value) {
             return value.toUpperCase();
         });
         let filtered = _.filter(json, (r: IISRequestData) => (!r.url
-            || !upperCaseNames.indexOf(r.url.toUpperCase())));
+            || upperCaseNames.indexOf(r.url.toUpperCase()) < 0));
         return filtered;
     }
-    private async internalGetJsonDataFromServer(seconds: number) {
+    private convertToObj(json: any) {
+        if (!json || !json.appcmd || !json.appcmd.REQUEST) return [];
+        let requests = json.appcmd.REQUEST;
+
+        let obj = _.map(requests, r => {
+            let rtn = new IISRequestData();
+            let d = r.$;
+            rtn.appPoolName = d["APPPOOL.NAME"];
+            rtn.clientIP = d["ClientIp"];
+            rtn.timeMS = d["Time"];
+            rtn.url = d["Url"];
+            rtn.verb = d["Verb"];
+            return rtn;
+        });
+        return obj;
+    }
+    private async internalGetJsonDataFromServer(thresholdSeconds: number) {
         //let process = require('child_process');
-        let ms = seconds * 1000;
+        let ms = thresholdSeconds * 1000;
         let command = `%windir%\system32\inetsrv\appcmd list requests /elapsed:${ms}`;
         let cmd: child.ChildProcess = child.spawn(command);
 
         cmd.stdout.on('data', function (output) {
             console.log(output.toString());
-            return output;
+            return this.convertToObj(output);
         });
 
         cmd.on('close', function () {
@@ -185,12 +187,12 @@ export class IISReporter extends BaseReporter {
             console.log(err);
         });
     }
-    private async internalGetJsonDataFromFile(seconds: number) {
+    private async internalGetJsonDataFromFile(thresholdSeconds: number) {
         let xmlData = await fs.readFile(__dirname + '/../../prototypes/iisxml.xml', 'utf-8');
         //var jsonObj = parser.parse(xmlData);
         var parser = new xml2js.Parser( /* options */);
         let json = await parser.parseStringPromise(xmlData);
-        return json;
+        return this.convertToObj(json);
     }
 }
 
