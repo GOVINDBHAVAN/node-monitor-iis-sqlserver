@@ -2,22 +2,60 @@ import { BaseReporter, Config, AlertInput, NotificationEventType, InputUnit } fr
 const { promises: fs } = require("fs");
 import xml2js from 'xml2js';
 import _ from 'lodash';
+import * as child from 'child_process';
 
 export class IISReporter extends BaseReporter {
 
     // if uncomment then it create object of base config not this child config.
     config: IISReporterConfig;
+    loadDataFromServer = false;
 
     constructor(config: IISReporterConfig, db: PouchDB.Database) {
         super(config, db);
         this.db = db;
         this.config = config;
     }
+    loadLocalConfig() {
+        this.loadDataFromServer = Boolean(process.env['IIS_DATA_FROM_SERVER'] || false);
+        if (this.loadDataFromServer) {
+
+        }
+    }
     check(): void {
         this.checkIIS();
     }
+    /** Returns true then to check other notification type:
+     * True means current notificationEventType is executed and sent
+     */
+    async internalCheckIIS(notificationEventType: NotificationEventType, input?: InputUnit) {
+        if (!input || !input.interval) return false;
+        let eventTypeString = NotificationEventType[notificationEventType].toString().toLowerCase();
+        let seconds = input.interval;
+        if (!seconds || seconds <= 0) return false;
+        let result = await this.fetchIIS(seconds);
+
+        const type = 'iis';
+        let rtn = false;
+        for (let i = 0; i < result.length; i++) {
+            const r = result[i];
+            let s = Math.trunc(r.timeMS / 1000);
+            if (s >= seconds) {
+                this.internalCheckAndFire(input, type, notificationEventType, s, true, { r });
+                rtn = true;
+            }
+        }
+    }
+
     async checkIIS(): Promise<void> {
-        let data = this.fetchIIS();
+        let done = false;
+        done = await this.internalCheckIIS(NotificationEventType.DANGER, this.config.executionSeconds.danger);
+        if (!done) {
+            done = await this.internalCheckIIS(NotificationEventType.WARNING, this.config.executionSeconds.warning);
+        }
+        if (!done) {
+            done = await this.internalCheckIIS(NotificationEventType.ALERT, this.config.executionSeconds.info);
+        }
+
         // /* { all in MB
         //     totalMemMb: 5859.13,
         //     usedMemMb: 3134.66,
@@ -35,15 +73,6 @@ export class IISReporter extends BaseReporter {
         // let fm = await mem.free();
         // if (this.config.freeMemPercentage) {
         //     const { info, warning, danger } = this.config.freeMemPercentage;
-        //     const type = 'mem';
-        //     //mem.free().then(fm => {
-        //     let done = false;
-        //     const { totalMemMb, freeMemMb } = fm;
-        //     if (totalMemMb <= 0) { log.info('totalMemMb is zero'); return };
-        //     const perc = Math.trunc(freeMemMb / totalMemMb * 100);
-        //     if (!done && danger) { done = this.internalCheckAndFire(danger, type, NotificationEventType.DANGER, perc, true, { freeMemMb, totalMemMb }); }
-        //     if (!done && warning) { done = this.internalCheckAndFire(warning, type, NotificationEventType.WARNING, perc, true, { freeMemMb, totalMemMb }); }
-        //     if (!done && info) { done = this.internalCheckAndFire(info, type, NotificationEventType.ALERT, perc, true, { freeMemMb, totalMemMb }); }
         //     //});
         // }
 
@@ -94,13 +123,11 @@ export class IISReporter extends BaseReporter {
         //     await upsert(this.ms);
         // }
     }
-    async fetchIIS() {
+    async fetchIIS(seconds: number) {
         try {
             //"/home/govind/Documents/projects/monitor/dist/routines"
-            let xmlData = await fs.readFile(__dirname + '/../../prototypes/iisxml.xml', 'utf-8');
-            //var jsonObj = parser.parse(xmlData);
-            var parser = new xml2js.Parser(/* options */);
-            let json = await parser.parseStringPromise(xmlData);
+            let json = await this.getJsonData(seconds);
+            if (!json || !json.appcmd || !json.appcmd.REQUEST) return [];
             console.log(json);
             let requests = json.appcmd.REQUEST;
 
@@ -108,18 +135,62 @@ export class IISReporter extends BaseReporter {
                 let rtn = new IISRequestData();
                 let d = r.$;
                 rtn.appPoolName = d["APPPOOL.NAME"];
-                rtn.clientIP = d["ClientIP"];
+                rtn.clientIP = d["ClientIp"];
                 rtn.timeMS = d["Time"];
                 rtn.url = d["Url"];
                 rtn.verb = d["Verb"];
                 return rtn;
             });
             console.log(obj);
-
-            return json;
+            return obj;
         } catch (e) {
             console.log("e", e);
         }
+    }
+
+    private async getJsonData(seconds: number) {
+        if (this.loadDataFromServer) {
+            return this.filterData(this.internalGetJsonDataFromServer(seconds));
+        }
+        else {
+            return this.filterData(this.internalGetJsonDataFromFile(seconds));
+        }
+    }
+    private async filterData(json: any) {
+        if (!this.config.appPoolsToCheck || this.config.appPoolsToCheck.length <= 0) return json;
+        var upperCaseNames = this.config.appPoolsToCheck.map(function (value) {
+            return value.toUpperCase();
+        });
+        let filtered = _.filter(json, (r: IISRequestData) => (!r.url
+            || !upperCaseNames.indexOf(r.url.toUpperCase())));
+        return filtered;
+    }
+    private async internalGetJsonDataFromServer(seconds: number) {
+        //let process = require('child_process');
+        let ms = seconds * 1000;
+        let command = `%windir%\system32\inetsrv\appcmd list requests /elapsed:${ms}`;
+        let cmd: child.ChildProcess = child.spawn(command);
+
+        cmd.stdout.on('data', function (output) {
+            console.log(output.toString());
+            return output;
+        });
+
+        cmd.on('close', function () {
+            console.log('Finished');
+        });
+
+        //Error handling
+        cmd.stderr.on('data', function (err) {
+            console.log(err);
+        });
+    }
+    private async internalGetJsonDataFromFile(seconds: number) {
+        let xmlData = await fs.readFile(__dirname + '/../../prototypes/iisxml.xml', 'utf-8');
+        //var jsonObj = parser.parse(xmlData);
+        var parser = new xml2js.Parser( /* options */);
+        let json = await parser.parseStringPromise(xmlData);
+        return json;
     }
 }
 
