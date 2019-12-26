@@ -17,9 +17,6 @@ export class IISReporter extends BaseReporter {
     }
     loadLocalConfig() {
         this.loadDataFromServer = Boolean(process.env['IIS_DATA_FROM_SERVER'] || false);
-        if (this.loadDataFromServer) {
-
-        }
     }
     check(): void {
         this.checkIIS();
@@ -28,34 +25,37 @@ export class IISReporter extends BaseReporter {
      * True means current notificationEventType is executed and sent
      */
     async internalCheckIIS(notificationEventType: NotificationEventType, input?: InputUnit) {
-        if (!input || !input.threshold) return false;
+        if (!input || !input.threshold) return [];
         // let eventTypeString = NotificationEventType[notificationEventType].toString().toLowerCase();
         let thresholdSeconds = input.threshold;
-        if (!thresholdSeconds || thresholdSeconds <= 0) return false;
+        if (!thresholdSeconds || thresholdSeconds <= 0) return [];
         let result = await this.fetchIIS(thresholdSeconds);
 
-        const type = 'iis';
-        let rtn = false;
+        let rtn: IISRequestData[] = [];
         for (let i = 0; i < result.length; i++) {
             const r = result[i];
             let s = Math.trunc(r.timeMS / 1000);
             if (s >= thresholdSeconds) {
-                this.internalCheckAndFire(input, type, notificationEventType, s, true, { r, 'unit': 'seconds' });
-                rtn = true;
+                //this.internalCheckAndFire(input, type, notificationEventType, s, true, { r, 'unit': 'seconds' });
+                rtn.push(r);
             }
         }
         return rtn;
     }
 
     async checkIIS(): Promise<void> {
-        let done = false;
-        done = await this.internalCheckIIS(NotificationEventType.DANGER, this.config.executionSeconds.danger);
-        if (!done) {
-            done = await this.internalCheckIIS(NotificationEventType.WARNING, this.config.executionSeconds.warning);
-        }
-        if (!done) {
-            done = await this.internalCheckIIS(NotificationEventType.ALERT, this.config.executionSeconds.info);
-        }
+        const type = 'iis';
+        let dangerResult = await this.internalCheckIIS(NotificationEventType.DANGER, this.config.executionSeconds.danger);
+        let warningResult = await this.internalCheckIIS(NotificationEventType.WARNING, this.config.executionSeconds.warning);
+        let infoResult = await this.internalCheckIIS(NotificationEventType.ALERT, this.config.executionSeconds.info);
+        console.log(_.findIndex(dangerResult, j => j.requestName === '/mccannwg/api/attendance/reprocessForCompilation?id=a6409ab0-a54e-4f85-8496-aa4d00ffe23a'));
+        _.remove(warningResult, r => _.findIndex(dangerResult, j => j.requestName === r.requestName) >= 0);
+        _.remove(infoResult, r => _.findIndex(dangerResult, j => j.requestName === r.requestName) >= 0);
+        _.remove(infoResult, r => _.findIndex(warningResult, j => j.requestName === r.requestName) >= 0);
+        console.log('dangerResult', dangerResult.length);
+        console.log('warningResult', warningResult.length);
+        console.log('infoResult', infoResult.length);
+
 
         // /* { all in MB
         //     totalMemMb: 5859.13,
@@ -136,13 +136,13 @@ export class IISReporter extends BaseReporter {
 
     private async getJsonData(thresholdSeconds: number) {
         if (this.loadDataFromServer) {
-            return this.filterData(await this.internalGetJsonDataFromServer(thresholdSeconds));
+            return this.filterData(await this.internalGetJsonDataFromServer(thresholdSeconds) as unknown as IISRequestData[]);
         }
         else {
             return this.filterData(await this.internalGetJsonDataFromFile(thresholdSeconds));
         }
     }
-    private filterData(json: any) {
+    private filterData(json: IISRequestData[]) {
         if (!this.config.appPoolsToCheck || this.config.appPoolsToCheck.length <= 0) return json;
         var upperCaseNames = this.config.appPoolsToCheck.map(function (value) {
             return value.toUpperCase();
@@ -151,7 +151,7 @@ export class IISReporter extends BaseReporter {
             || upperCaseNames.indexOf(r.url.toUpperCase()) < 0));
         return filtered;
     }
-    private convertToObj(json: any) {
+    private convertToObj(json: any): IISRequestData[] {
         if (!json || !json.appcmd || !json.appcmd.REQUEST) return [];
         let requests = json.appcmd.REQUEST;
 
@@ -163,6 +163,7 @@ export class IISReporter extends BaseReporter {
             rtn.timeMS = d["Time"];
             rtn.url = d["Url"];
             rtn.verb = d["Verb"];
+            rtn.requestName = d["REQUEST.NAME"];
             return rtn;
         });
         return obj;
@@ -174,8 +175,10 @@ export class IISReporter extends BaseReporter {
         let cmd: child.ChildProcess = child.spawn(command);
 
         cmd.stdout.on('data', function (output) {
-            console.log(output.toString());
-            return this.convertToObj(output);
+            // console.log(output.toString());
+            let json = this.convertToObj(output);
+            let filtered = _.filter(json, (r: IISRequestData) => Math.trunc(r.timeMS / 1000) >= thresholdSeconds);
+            return filtered;
         });
 
         cmd.on('close', function () {
@@ -185,6 +188,7 @@ export class IISReporter extends BaseReporter {
         //Error handling
         cmd.stderr.on('data', function (err) {
             console.log(err);
+            return [];
         });
     }
     private async internalGetJsonDataFromFile(thresholdSeconds: number) {
@@ -202,6 +206,7 @@ export class IISRequestData {
     timeMS: number;
     appPoolName: string;
     verb: string;
+    requestName: string;
 }
 
 export interface IISReporterConfig extends Config {

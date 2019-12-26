@@ -14,7 +14,12 @@
       "outFiles": [
         "${workspaceFolder}/dist/**/*.js"
       ],
-      "autoAttachChildProcesses": true
+      "autoAttachChildProcesses": true,
+      "skipFiles": [
+        "<node_internals>/**/*.js",
+        "${workspaceFolder}/node_modules/**/*.js",
+        //"${workspaceFolder}/dist/**/*.js"
+      ]
     }
   ]
 }
