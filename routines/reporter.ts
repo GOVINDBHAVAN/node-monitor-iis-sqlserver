@@ -35,6 +35,7 @@ export interface Reporter {
 
 export interface Config {
     intervalSeconds: number;
+    enable: boolean;
 }
 /** to provide interval duration and comparison unit to fire the event */
 export interface InputUnit {
@@ -121,7 +122,9 @@ export class BaseReporter extends EventEmitter implements Reporter {
         } catch (err) { log.error(err); }
     }
     registerCheck() {
-        setInterval(this.check.bind(this), this.config.intervalSeconds * 1000);
+        if (this.config.enable) {
+            setInterval(this.check.bind(this), this.config.intervalSeconds * 1000);
+        }
         // this.check();
     }
     checkSystemUptime() {

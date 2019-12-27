@@ -42,14 +42,18 @@ process.on('message', function (m) {
 //process.exit(0);
 
 
-
 let onAlertEmail: boolean = Boolean(process.env['ON_ALERT_EMAIL']);
+let chkCPU: boolean = Boolean(process.env['CHECK_CPU']);
+let chkMEM: boolean = Boolean(process.env['CHECK_MEM']);
+let chkIIS: boolean = Boolean(process.env['CHECK_IIS']);
+let chkSQL: boolean = Boolean(process.env['CHECK_SQL']);
 let emailNotificationDurationMinutes: number = Number(process.env['EMAIL_NOTIFICATION_DURATION_MINUTES'] || 15);
 let systemReporterCheckIntervalSeconds: number = Number(process.env['SYSTEM_REPORTER_CHECK_INTERVAL_SECONDS'] || 5);
 let onWarningEmail: boolean = Boolean(process.env['ON_WARNING_EMAIL']);
 let onDangerEmail: boolean = Boolean(process.env['ON_DANGER_EMAIL']);
 const iisReporter = new IISReporter({
     intervalSeconds: systemReporterCheckIntervalSeconds,
+    enable: chkIIS,
     executionSeconds: {
         // if requests execution exceeds 10 seconds then alert
         info: { threshold: 10 },
@@ -59,9 +63,14 @@ const iisReporter = new IISReporter({
         danger: { threshold: 120 }
     }, appPoolsToCheck: ['/ozell/api/attendance/process', '/drbhattlab/api/attendance/process']
 }, db);
+iisReporter.onAlert = (data: any) => onAlert(data);
+iisReporter.onWarning = (data: any) => onWarning(data);
+iisReporter.onDanger = (data: any) => onDanger(data);
+
 const sysReporter = new SystemReporter({
     // to check system in this internal seconds
     intervalSeconds: systemReporterCheckIntervalSeconds,
+    enable: chkMEM || chkCPU,
     cpuAvgLoadTime: {
         // last 1 min load time to check for info
         info: { interval: 1, threshold: 1 },
@@ -237,6 +246,7 @@ function sendEmail(data: any) {
         .catch(console.error);
 
 }
+
 
 
 // log.info('test', new Date(), 'a');

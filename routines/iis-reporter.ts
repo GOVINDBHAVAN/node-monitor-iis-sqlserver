@@ -26,10 +26,10 @@ export class IISReporter extends BaseReporter {
      * True means current notificationEventType is executed and sent
      */
     async internalCheckIIS(notificationEventType: NotificationEventType, input?: InputUnit) {
-        if (!input || !input.threshold) return [];
+        if (!input || !input.threshold) return { result: [], notificationEventType, input };
         // let eventTypeString = NotificationEventType[notificationEventType].toString().toLowerCase();
         let thresholdSeconds = input.threshold;
-        if (!thresholdSeconds || thresholdSeconds <= 0) return [];
+        if (!thresholdSeconds || thresholdSeconds <= 0) return { result: [], notificationEventType, input };
         let result = await this.fetchIIS(thresholdSeconds);
 
         let rtn: IISRequestData[] = [];
@@ -41,7 +41,7 @@ export class IISReporter extends BaseReporter {
                 rtn.push(r);
             }
         }
-        return rtn;
+        return { result: rtn, notificationEventType, input };
     }
 
     async checkIIS(): Promise<void> {
@@ -49,14 +49,23 @@ export class IISReporter extends BaseReporter {
         let dangerResult = await this.internalCheckIIS(NotificationEventType.DANGER, this.config.executionSeconds.danger);
         let warningResult = await this.internalCheckIIS(NotificationEventType.WARNING, this.config.executionSeconds.warning);
         let infoResult = await this.internalCheckIIS(NotificationEventType.ALERT, this.config.executionSeconds.info);
-        return;
-        console.log(_.findIndex(dangerResult, j => j.requestName === '/mccannwg/api/attendance/reprocessForCompilation?id=a6409ab0-a54e-4f85-8496-aa4d00ffe23a'));
-        _.remove(warningResult, r => _.findIndex(dangerResult, j => j.requestName === r.requestName) >= 0);
-        _.remove(infoResult, r => _.findIndex(dangerResult, j => j.requestName === r.requestName) >= 0);
-        _.remove(infoResult, r => _.findIndex(warningResult, j => j.requestName === r.requestName) >= 0);
-        console.log('dangerResult', dangerResult.length);
-        console.log('warningResult', warningResult.length);
-        console.log('infoResult', infoResult.length);
+        //console.log(_.findIndex(dangerResult, j => j.url === '/mccannwg/api/attendance/reprocessForCompilation?id=a6409ab0-a54e-4f85-8496-aa4d00ffe23a'));
+        _.remove(warningResult.result, r => _.findIndex(dangerResult.result, j => j.requestName === r.requestName) >= 0);
+        _.remove(infoResult.result, r => _.findIndex(dangerResult.result, j => j.requestName === r.requestName) >= 0);
+        _.remove(infoResult.result, r => _.findIndex(warningResult.result, j => j.requestName === r.requestName) >= 0);
+        if (dangerResult.result.length || warningResult.result.length || infoResult.result.length) {
+            let result = dangerResult;
+            if (!dangerResult.result.length && warningResult.result.length) {
+                result = warningResult;
+            } else if (!dangerResult.result.length && !warningResult.result.length) {
+                result = infoResult;
+            }
+            let max = _.maxBy(result.result, r => r.timeMS);
+            this.internalCheckAndFire(result.input, type, result.notificationEventType, max.timeMS, false, { danger: dangerResult.result, warning: warningResult.result, info: infoResult.result });
+        }
+        // console.log('dangerResult', dangerResult.length);
+        // console.log('warningResult', warningResult.length);
+        // console.log('infoResult', infoResult.length);
 
 
         // /* { all in MB
