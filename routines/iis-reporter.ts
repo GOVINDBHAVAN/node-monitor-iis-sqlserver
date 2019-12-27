@@ -12,6 +12,7 @@ export class IISReporter extends BaseReporter {
 
     constructor(config: IISReporterConfig, db: PouchDB.Database) {
         super(config, db);
+        this.loadLocalConfig();
         this.db = db;
         this.config = config;
     }
@@ -48,6 +49,7 @@ export class IISReporter extends BaseReporter {
         let dangerResult = await this.internalCheckIIS(NotificationEventType.DANGER, this.config.executionSeconds.danger);
         let warningResult = await this.internalCheckIIS(NotificationEventType.WARNING, this.config.executionSeconds.warning);
         let infoResult = await this.internalCheckIIS(NotificationEventType.ALERT, this.config.executionSeconds.info);
+        return;
         console.log(_.findIndex(dangerResult, j => j.requestName === '/mccannwg/api/attendance/reprocessForCompilation?id=a6409ab0-a54e-4f85-8496-aa4d00ffe23a'));
         _.remove(warningResult, r => _.findIndex(dangerResult, j => j.requestName === r.requestName) >= 0);
         _.remove(infoResult, r => _.findIndex(dangerResult, j => j.requestName === r.requestName) >= 0);
