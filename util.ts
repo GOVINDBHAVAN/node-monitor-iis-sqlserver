@@ -91,3 +91,18 @@ export function forkChild(relativePath: string, setPipe: boolean = true) {
     }
     return p;
 }
+
+export function toBoolean(value) {
+    if (!value) return false;
+    switch (value) {
+        case true:
+        case "true":
+        case 1:
+        case "1":
+        case "on":
+        case "yes":
+            return true;
+        default:
+            return false;
+    }
+}

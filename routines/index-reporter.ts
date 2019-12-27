@@ -6,7 +6,7 @@ import { SystemReporter } from './system-reporter';
 import * as pd from './db'
 import { config } from 'process';
 import { createEmail } from './email';
-import { secondToDayHoursMinutes, printTrace, sleep, dateDiff, dateToString } from '../util';
+import { secondToDayHoursMinutes, printTrace, sleep, dateDiff, dateToString, toBoolean } from '../util';
 import moment from 'moment';
 import { OperatingSystemDetail } from './reporter';
 import { IISReporter } from './iis-reporter';
@@ -42,15 +42,15 @@ process.on('message', function (m) {
 //process.exit(0);
 
 
-let onAlertEmail: boolean = Boolean(process.env['ON_ALERT_EMAIL']);
-let chkCPU: boolean = Boolean(process.env['CHECK_CPU']);
-let chkMEM: boolean = Boolean(process.env['CHECK_MEM']);
-let chkIIS: boolean = Boolean(process.env['CHECK_IIS']);
-let chkSQL: boolean = Boolean(process.env['CHECK_SQL']);
+let onAlertEmail = toBoolean(process.env['ON_ALERT_EMAIL']);
+let chkCPU = toBoolean(process.env['CHECK_CPU']);
+let chkMEM = toBoolean(process.env['CHECK_MEM']);
+let chkIIS = toBoolean(process.env['CHECK_IIS']);
+let chkSQL = toBoolean(process.env['CHECK_SQL']);
 let emailNotificationDurationMinutes: number = Number(process.env['EMAIL_NOTIFICATION_DURATION_MINUTES'] || 15);
 let systemReporterCheckIntervalSeconds: number = Number(process.env['SYSTEM_REPORTER_CHECK_INTERVAL_SECONDS'] || 5);
-let onWarningEmail: boolean = Boolean(process.env['ON_WARNING_EMAIL']);
-let onDangerEmail: boolean = Boolean(process.env['ON_DANGER_EMAIL']);
+let onWarningEmail: boolean = toBoolean(process.env['ON_WARNING_EMAIL']);
+let onDangerEmail: boolean = toBoolean(process.env['ON_DANGER_EMAIL']);
 const iisReporter = new IISReporter({
     intervalSeconds: systemReporterCheckIntervalSeconds,
     enable: chkIIS,
