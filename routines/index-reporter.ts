@@ -6,10 +6,15 @@ import { SystemReporter } from './system-reporter';
 import * as pd from './db'
 import { config } from 'process';
 import { createEmail } from './email';
-import { secondToDayHoursMinutes, printTrace, sleep, dateDiff, dateToString, toBoolean } from '../util';
+import { secondToDayHoursMinutes, printTrace, sleep, dateDiff, dateToString, toBoolean, isAdmin } from '../util';
 import moment from 'moment';
 import { OperatingSystemDetail } from './reporter';
 import { IISReporter } from './iis-reporter';
+
+if (!isAdmin()) {
+    console.log('Not running as administrator or root user.');
+    process.exit(0);
+}
 
 //console.log('process.env', process.env);
 // sleep(2000);

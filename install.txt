@@ -40,6 +40,8 @@ npm install moment
 # npm install dotenv --save
 # npm install --dev-save @types/dotenv
 
+npm install is-admin
+
 
 
 npm i why-is-node-running --save

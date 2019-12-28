@@ -186,7 +186,7 @@ export class IISReporter extends BaseReporter {
         let cmd: child.ChildProcess = child.spawn(command);
 
         cmd.stdout.on('data', function (output) {
-            // console.log(output.toString());
+            console.log(output.toString());
             let json = this.convertToObj(output);
             let filtered = _.filter(json, (r: IISRequestData) => Math.trunc(r.timeMS / 1000) >= thresholdSeconds);
             return filtered;

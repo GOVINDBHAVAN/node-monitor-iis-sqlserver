@@ -3,6 +3,7 @@ import { v4 as uuid } from 'uuid';
 import inspector from 'inspector';
 import * as child from 'child_process';
 export const isdev: boolean = env == 'development';
+const platform = require("os").platform();
 
 /** Generate GUID v4 */
 export function guid() {
@@ -104,5 +105,24 @@ export function toBoolean(value) {
             return true;
         default:
             return false;
+    }
+}
+
+export async function isAdmin() {
+    if (platform == "win32" || platform == "win64") {
+        require('child_process').exec('net session', function (err, stdout, stderr) {
+            if (err || !(stdout.indexOf("There are no entries in the list.") > -1)) {
+                //console.log("You are not running this application as administrator");
+                return false;
+            } else {
+                //console.log("This is being ran with administrator privileges!");
+                return true;
+            }
+        });
+    } else {
+        //console.log("Unknown");
+        // https://h3manth.com/new/blog/2014/check-for-root-user/
+        let isRoot = process.getuid && process.getuid() === 0;
+        return isRoot;
     }
 }
