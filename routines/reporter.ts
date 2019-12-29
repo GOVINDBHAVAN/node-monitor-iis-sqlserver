@@ -59,6 +59,8 @@ export enum NotificationEventType {
 export interface NotificationType {
     /** notification time */
     now: Date;
+    /** check if this event is real event where data exceeds threashold or informational data only */
+    isAlert: boolean;
     /** type of notification CPU, RAM, Harddisk, IIS etc. */
     type: string;
     /** type of event alert, warning, danger */
@@ -160,13 +162,20 @@ export class BaseReporter extends EventEmitter implements Reporter {
                 , furtherDetail
             });
         }
-        if (result
-            && input.threshold
-            && (!reverse ? (result >= input.threshold) : (result < input.threshold))
-        ) {
+        if (result) {
             const data = { notification: 'alert', type, result, threshold: input.threshold, eventTypeString, furtherDetail };
-            this.saveInDB(data);
-            this.checkAndRaiseEvent({ now: new Date(), type, eventType, data, sysInfo: BaseReporter.sysInfo });
+            let isAlert = false;
+            if (input.threshold
+                && (!reverse ? (result >= input.threshold) : (result < input.threshold))
+            ) {
+                isAlert = true;
+            }
+            let eventData: NotificationType = { now: new Date(), type, eventType, data, sysInfo: BaseReporter.sysInfo, isAlert };
+            if (isAlert) {
+                // save only if this is an geniune alert
+                this.saveInDB(data);
+            }
+            this.checkAndRaiseEvent(eventData);
             return true;
         }
         return false;

@@ -7,10 +7,10 @@
         "ON_ALERT_EMAIL": false,
         "ON_WARNING_EMAIL": true,
         "ON_DANGER_EMAIL": true,
-        "CHECK_CPU": false,
-        "CHECK_MEM": false,
+        "CHECK_CPU": true,
+        "CHECK_MEM": true,
         "CHECK_IIS": true,
-        "CHECK_SQL": true,
+        "CHECK_SQL": false,
         "EMAIL_NOTIFICATION_DURATION_MINUTES": 2,
         "SYSTEM_REPORTER_CHECK_INTERVAL_SECONDS": 10
     },

@@ -6,10 +6,11 @@ import { SystemReporter } from './system-reporter';
 import * as pd from './db'
 import { config } from 'process';
 import { createEmail } from './email';
-import { secondToDayHoursMinutes, printTrace, sleep, dateDiff, dateToString, toBoolean, isAdmin } from '../util';
+import { secondToDayHoursMinutes, printTrace, sleep, dateDiff, dateToString, toBoolean, isAdmin, secondsToString } from '../util';
 import moment from 'moment';
 import { OperatingSystemDetail } from './reporter';
 import { IISReporter } from './iis-reporter';
+import _ from 'lodash';
 
 if (!isAdmin()) {
     console.log('Not running as administrator or root user.');
@@ -48,6 +49,7 @@ process.on('message', function (m) {
 
 
 let onAlertEmail = toBoolean(process.env['ON_ALERT_EMAIL']);
+let chkDISK = toBoolean(process.env['CHECK_DISK']);
 let chkCPU = toBoolean(process.env['CHECK_CPU']);
 let chkMEM = toBoolean(process.env['CHECK_MEM']);
 let chkIIS = toBoolean(process.env['CHECK_IIS']);
@@ -134,12 +136,14 @@ let lastEmailSendDic: { [key: string]: Date; } = {};
 let emailDataForTag: { [key: string]: { [key: string]: any; }; } = {};
 
 function getTagForKey(type: string) {
-    switch (type.toLocaleLowerCase()) {
-        case "mem": case "cpu": case "disk": {
-            return "Operating System";
-        }
-    }
-    return type;
+    // switch (type.toLocaleLowerCase()) {
+    //     case "mem": case "cpu": case "disk": {
+    //         return "Operating System";
+    //     }
+    // }
+    //return type;
+    // send single email for all types of RAM,CPU,IIS,SQL
+    return "EMAIL_ALERT";
 }
 
 function getEmailData(tagForKey: string, type: string) {
@@ -157,6 +161,23 @@ function addEmailData(tagForKey: string, type: string, data: any) {
     emailDataForTag[tagForKey][type] = data;
 }
 
+/** check if given types (danger, warning, alert) is available in from data array */
+function isAvailable(types: string[], sample: any[]): { available: boolean, type: string } {
+    let result = { available: false, type: null };
+    for (let i = 0; i < types.length; i++) {
+        let type = types[i];
+        _.forEach(sample, (d: any) => {
+            if (d && d.data && d.data.eventTypeString === type) {
+                result = { available: true, type: type };
+                return;
+            }
+        });
+        if (result) {
+            return result;
+        }
+    }
+    return result;
+}
 function sendEmail(data: any) {
     let type: string = data.data.type;
     let tagForKey = getTagForKey(type);
@@ -177,6 +198,10 @@ function sendEmail(data: any) {
     // add data in queue for sending single email
     addEmailData(tagForKey, type, data);
 
+    if (!data.isAlert) {
+        return;
+    }
+
     if (exists && duration.minutes < emailNotificationDurationMinutes) {
         console.log(`last ${type} email sent ${duration.minutes} minutes ago, no need to send now`);
         return;
@@ -187,28 +212,79 @@ function sendEmail(data: any) {
     console.log('tagForKey', tagForKey);
 
     let dataForEmail = {};
-    if (tagForKey.toLocaleLowerCase() === 'operating system') {
-        let cpu = getEmailData(tagForKey, 'cpu');
-        let mem = getEmailData(tagForKey, 'mem');
-        let disk = getEmailData(tagForKey, 'disk');
-        if (!cpu || !mem) {
-            // wait for the cpu and mem data, then send single email.
-            return;
+    /*
+        if (tagForKey.toLocaleLowerCase() === 'operating system') {
+            let cpu = getEmailData(tagForKey, 'cpu');
+            let mem = getEmailData(tagForKey, 'mem');
+            let disk = getEmailData(tagForKey, 'disk');
+            if (!cpu || !mem) {
+                // wait for the cpu and mem data, then send single email.
+                return;
+            }
+            let subjectType = '';
+            if (cpu.data.eventTypeString == 'danger' || mem.data.eventTypeString == 'danger') {
+                subjectType = 'danger';
+            }
+            else if (cpu.data.eventTypeString == 'warning' || mem.data.eventTypeString == 'warning') {
+                subjectType = 'warning';
+            }
+            else {
+                subjectType = 'alert';
+            }
+            dataForEmail = { subjectType, cpu: cpu.data, mem: mem.data, disk: (disk ? disk.data : null) };
+            console.log('dataForEmail', dataForEmail);
+    
         }
-        let subjectType = '';
-        if (cpu.data.eventTypeString == 'danger' || mem.data.eventTypeString == 'danger') {
-            subjectType = 'danger';
-        }
-        else if (cpu.data.eventTypeString == 'warning' || mem.data.eventTypeString == 'warning') {
-            subjectType = 'warning';
-        }
-        else {
-            subjectType = 'alert';
-        }
-        dataForEmail = { subjectType, cpu: cpu.data, mem: mem.data, disk: (disk ? disk.data : null) };
-        console.log('dataForEmail', dataForEmail);
-
+    */
+    let sql = getEmailData(tagForKey, 'sql');
+    let iis = getEmailData(tagForKey, 'iis');
+    let cpu = getEmailData(tagForKey, 'cpu');
+    let mem = getEmailData(tagForKey, 'mem');
+    let disk = getEmailData(tagForKey, 'disk');
+    if ((chkSQL && !sql)
+        || (chkIIS && !iis)
+        || (chkCPU && !cpu)
+        || (chkMEM && !mem)
+        || (chkDISK && !disk)) {
+        // wait for all data available, then send single email.
+        return;
     }
+    let sample = [];
+    if (chkSQL) sample.push(sql);
+    if (chkIIS) sample.push(iis);
+    if (chkCPU) sample.push(cpu);
+    if (chkMEM) sample.push(mem);
+    if (chkDISK) sample.push(disk);
+    let subjectType = isAvailable(['danger', 'warning', 'alert'], sample);
+    if (!subjectType || !subjectType.available) {
+        log.error(`Error occured subject type not available`, sample);
+        throw `Error occured subject type not available`;
+    }
+    if (iis && iis.data) {
+        // let requests = [{ "url": 'a', "time": "t", "alertType": "a" }
+        //     , { "url": 'b', "time": "t2", "alertType": "ab" }];
+        let requests = _.orderBy(_.concat(iis.data.furtherDetail.danger, iis.data.furtherDetail.warning, iis.data.furtherDetail.info)
+            , r => {
+                r.timeSeconds
+            }, "desc");
+        let maxRequest = _.find(requests, r => {
+            if (r.timeSeconds === iis.data.result) return r;
+        });
+        iis.data = {
+            ...iis.data,
+            secondsToString: secondsToString(iis.data.result),
+            maxRequest,
+            requests
+        }
+    }
+    dataForEmail = {
+        subjectType: subjectType.type
+        , sql: (sql ? sql.data : null)
+        , iis: (iis ? iis.data : null)
+        , cpu: (cpu ? cpu.data : null)
+        , mem: (mem ? mem.data : null)
+        , disk: (disk ? disk.data : null)
+    };
 
     console.log('dataForEmail', dataForEmail);
 
@@ -229,7 +305,7 @@ function sendEmail(data: any) {
         emailData = {
             ...emailData,
             os: sysInfo,
-            uptime: JSON.stringify(secondToDayHoursMinutes(sysInfo.uptimeSeconds))
+            uptime: secondsToString(sysInfo.uptimeSeconds)
         };
     }
     console.log('sending email', emailData);

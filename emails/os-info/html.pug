@@ -1,17 +1,19 @@
-p Time: #{now}, Hostname: #{os.hostname}
+p Time: #{now}, Hostname: #{os.hostname}, upTime: #{uptime}
 p CPU #{cpu.eventTypeString.toLocaleUpperCase()}: load avg: #{Math.floor(cpu.result)} / 10
 p RAM #{mem.eventTypeString.toLocaleUpperCase()}: free: #{Math.floor(mem.result)}%, free MB: #{Math.floor(mem.furtherDetail.freeMemMb)} / #{Math.floor(mem.furtherDetail.totalMemMb)}
 
-p IIS Long running results: #{iis.type}
+p IIS #{iis.eventTypeString.toLocaleUpperCase()}: threshold: #{iis.threshold} seconds:
+p Top Request: #{iis.maxRequest.url} executing since: #{iis.secondsToString}
 table(style='width:100%', border='1')
   tr
     th url
-    th time
-  tr
-  each val in #{iis.requests}
-    td #{val.url}
-    td #{val.time}
-
+    th time seconds
+    th type
+  each r in iis.requests
+    tr
+      td=r.url
+      td=r.timeSeconds
+      td=r.type
 
 p Server Details:
 table(style='width:100%', border='1')

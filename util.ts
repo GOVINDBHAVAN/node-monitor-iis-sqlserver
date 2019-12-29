@@ -43,6 +43,16 @@ export function dateDiff(start, end) {
     return { days, hours, minutes, seconds, milliseconds, weeks };
 }
 
+/** Convert seconds to print as string like 1 days, 2h, 37m and 12s */
+export function secondsToString(seconds) { // day, h, m and s
+    var days = Math.floor(seconds / (24 * 60 * 60));
+    seconds -= days * (24 * 60 * 60);
+    var hours = Math.floor(seconds / (60 * 60));
+    seconds -= hours * (60 * 60);
+    var minutes = Math.floor(seconds / (60));
+    seconds -= minutes * (60);
+    return ((0 < days) ? (days + " day, ") : "") + hours + "h, " + minutes + "m and " + seconds + "s";
+}
 export function secondToDayHoursMinutes(seconds) {
     //var seconds = parseInt(123456, 10);
 

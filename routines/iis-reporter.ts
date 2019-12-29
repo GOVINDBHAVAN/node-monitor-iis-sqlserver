@@ -35,7 +35,7 @@ export class IISReporter extends BaseReporter {
         let rtn: IISRequestData[] = [];
         for (let i = 0; i < result.length; i++) {
             const r = result[i];
-            let s = Math.trunc(r.timeMS / 1000);
+            let s = r.timeSeconds;
             if (s >= thresholdSeconds) {
                 //this.internalCheckAndFire(input, type, notificationEventType, s, true, { r, 'unit': 'seconds' });
                 rtn.push(r);
@@ -60,80 +60,22 @@ export class IISReporter extends BaseReporter {
             } else if (!dangerResult.result.length && !warningResult.result.length) {
                 result = infoResult;
             }
-            let max = _.maxBy(result.result, r => r.timeMS);
-            this.internalCheckAndFire(result.input, type, result.notificationEventType, max.timeMS, false, { danger: dangerResult.result, warning: warningResult.result, info: infoResult.result });
+            let max = _.maxBy(result.result, r => r.timeSeconds).timeSeconds;
+            this.internalCheckAndFire(result.input, type, result.notificationEventType, max, false,
+                {
+                    danger: this.AddType(dangerResult.result, 'danger'),
+                    warning: this.AddType(warningResult.result, 'warning'),
+                    info: this.AddType(infoResult.result, 'info')
+                });
         }
-        // console.log('dangerResult', dangerResult.length);
-        // console.log('warningResult', warningResult.length);
-        // console.log('infoResult', infoResult.length);
-
-
-        // /* { all in MB
-        //     totalMemMb: 5859.13,
-        //     usedMemMb: 3134.66,
-        //     freeMemMb: 2724.47,
-        //     freeMemPercentage: 46.5
-        //    }
-        //    mem.info()
-        //        .then(info => {
-        //            console.log(info)
-        //        })
-        // */
-        // // { totalMemMb: 5859.13, freeMemMb: 2694.37 }
-        // // mem.free().then(fm => console.log(`free memory`, fm));
-        // //TODO: memory free check for 5 to 10 minutes not just current
-        // let fm = await mem.free();
-        // if (this.config.freeMemPercentage) {
-        //     const { info, warning, danger } = this.config.freeMemPercentage;
-        //     //});
-        // }
-
-        // if (this.config.ramUtilizationSummaryDurationMinutes) {
-        //     const type = 'mem';
-        //     let lastSyncTime: Date;
-        //     let now = new Date();
-        //     let dbValue: MemorySummary;
-        //     try {
-        //         //dbValue = await this.db.query(this.ms._id);
-        //         dbValue = first(await this.db.find({
-        //             selector: {
-        //                 tag: this.ms.tag
-        //             }
-        //         }));
-        //     } catch (err) {
-        //         console.log(err);
-        //         log.error(err);
-        //     }
-        //     if (dbValue && dbValue.time) {
-        //         lastSyncTime = new Date(dbValue.time);
-        //     }
-        //     else {
-        //         this.ms.time = now;
-        //     }
-        //     const durationDiff = dateDiff(lastSyncTime, now);
-        //     // console.log('summary', { dbValue, lastSyncTime, durationDiff });
-        //     // store 
-        //     this.ms.totalMemMb = fm.totalMemMb;
-        //     this.ms.lastFreeMemMb = fm.freeMemMb;
-        //     this.ms.percentage = 100 - Math.trunc(fm.freeMemMb / fm.totalMemMb * 100);
-        //     this.ms.avgTotalFreeMemMb += this.ms.percentage;
-        //     this.ms.avgTotalDurationSeconds = (durationDiff.milliseconds || 0) / 1000;
-        //     this.ms.count += 1;
-        //     this.ms.calc();
-        //     // console.log(this.ms);
-
-        //     if (durationDiff.minutes >= this.config.ramUtilizationSummaryDurationMinutes) {
-        //         let store = { ...this.ms };
-        //         store.tag = 'avg_mem';
-        //         //store._id = store.tag + ' as at ' + store.time.toString();
-        //         store._id = guid();
-        //         // store the overvall data for reporting
-        //         upsert(store);
-        //         //log.info(store.tag, this.ms);
-        //         this.ms.reset();
-        //     }
-        //     await upsert(this.ms);
-        // }
+    }
+    AddType(result: IISRequestData[], type: string) {
+        let newResult = _.map(result, r => {
+            return {
+                ...r, type
+            }
+        });
+        return newResult;
     }
     async fetchIIS(thresholdSeconds: number) {
         try {
@@ -171,7 +113,7 @@ export class IISReporter extends BaseReporter {
             let d = r.$;
             rtn.appPoolName = d["APPPOOL.NAME"];
             rtn.clientIP = d["ClientIp"];
-            rtn.timeMS = d["Time"];
+            rtn.timeSeconds = Math.trunc(d["Time"] / 1000);
             rtn.url = d["Url"];
             rtn.verb = d["Verb"];
             rtn.requestName = d["REQUEST.NAME"];
@@ -188,7 +130,7 @@ export class IISReporter extends BaseReporter {
         cmd.stdout.on('data', function (output) {
             console.log(output.toString());
             let json = this.convertToObj(output);
-            let filtered = _.filter(json, (r: IISRequestData) => Math.trunc(r.timeMS / 1000) >= thresholdSeconds);
+            let filtered = _.filter(json, (r: IISRequestData) => r.timeSeconds >= thresholdSeconds);
             return filtered;
         });
 
@@ -214,7 +156,7 @@ export class IISReporter extends BaseReporter {
 export class IISRequestData {
     url: string;
     clientIP: string;
-    timeMS: number;
+    timeSeconds: number;
     appPoolName: string;
     verb: string;
     requestName: string;
