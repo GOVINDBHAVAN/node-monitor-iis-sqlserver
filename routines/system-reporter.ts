@@ -47,9 +47,13 @@ export class SystemReporter extends BaseReporter {
             const { totalMemMb, freeMemMb } = fm;
             if (totalMemMb <= 0) { log.info('totalMemMb is zero'); return };
             const perc = Math.trunc(freeMemMb / totalMemMb * 100);
-            if (!done && danger) { done = this.internalCheckAndFire(danger, type, NotificationEventType.DANGER, perc, true, { freeMemMb, totalMemMb }); }
-            if (!done && warning) { done = this.internalCheckAndFire(warning, type, NotificationEventType.WARNING, perc, true, { freeMemMb, totalMemMb }); }
-            if (!done && info) { done = this.internalCheckAndFire(info, type, NotificationEventType.ALERT, perc, true, { freeMemMb, totalMemMb }); }
+            let last = 'alert'
+            if (!info) {
+                last = (warning ? 'warning' : 'danger');
+            }
+            if (!done && danger) { done = this.internalCheckAndFire(danger, type, NotificationEventType.DANGER, perc, true, { freeMemMb, totalMemMb }, last); }
+            if (!done && warning) { done = this.internalCheckAndFire(warning, type, NotificationEventType.WARNING, perc, true, { freeMemMb, totalMemMb }, last); }
+            if (!done && info) { done = this.internalCheckAndFire(info, type, NotificationEventType.ALERT, perc, true, { freeMemMb, totalMemMb }, last); }
             //});
         }
 
@@ -119,9 +123,13 @@ export class SystemReporter extends BaseReporter {
             //TODO it is not working in Windows returning 0
             // duration supported are: last 1, 5 and 15 minutes
             let usageInLast60Seconds = cpu.usage(60 * 1000);
-            if (!done && danger) { done = this.internalCheckAndFire(danger, type, NotificationEventType.DANGER, cpu.loadavgTime(danger.interval), null, { usageInLast60Seconds }); }
-            if (!done && warning) { done = this.internalCheckAndFire(warning, type, NotificationEventType.WARNING, cpu.loadavgTime(warning.interval), null, { usageInLast60Seconds }); }
-            if (!done && info) { done = this.internalCheckAndFire(info, type, NotificationEventType.ALERT, cpu.loadavgTime(info.interval), null, { usageInLast60Seconds }); }
+            let last = 'alert'
+            if (!info) {
+                last = (warning ? 'warning' : 'danger');
+            }
+            if (!done && danger) { done = this.internalCheckAndFire(danger, type, NotificationEventType.DANGER, cpu.loadavgTime(danger.interval), null, { usageInLast60Seconds }, last); }
+            if (!done && warning) { done = this.internalCheckAndFire(warning, type, NotificationEventType.WARNING, cpu.loadavgTime(warning.interval), null, { usageInLast60Seconds }, last); }
+            if (!done && info) { done = this.internalCheckAndFire(info, type, NotificationEventType.ALERT, cpu.loadavgTime(info.interval), null, { usageInLast60Seconds }, last); }
         }
 
     }

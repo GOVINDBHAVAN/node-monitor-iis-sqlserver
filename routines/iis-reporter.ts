@@ -55,9 +55,12 @@ export class IISReporter extends BaseReporter {
         _.remove(infoResult.result, r => _.findIndex(warningResult.result, j => j.requestName === r.requestName) >= 0);
         if (dangerResult.result.length || warningResult.result.length || infoResult.result.length) {
             let result = dangerResult;
+            let last = 'danger';
             if (!dangerResult.result.length && warningResult.result.length) {
+                last = 'warning';
                 result = warningResult;
             } else if (!dangerResult.result.length && !warningResult.result.length) {
+                last = 'alert';
                 result = infoResult;
             }
             let max = _.maxBy(result.result, r => r.timeSeconds).timeSeconds;
@@ -66,7 +69,7 @@ export class IISReporter extends BaseReporter {
                     danger: this.AddType(dangerResult.result, 'danger'),
                     warning: this.AddType(warningResult.result, 'warning'),
                     info: this.AddType(infoResult.result, 'info')
-                });
+                }, last);
         }
     }
     AddType(result: IISRequestData[], type: string) {

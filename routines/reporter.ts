@@ -147,7 +147,8 @@ export class BaseReporter extends EventEmitter implements Reporter {
     }
     protected internalCheckAndFire(input: InputUnit, type: string, eventType: NotificationEventType, result?: number
         , reverse?: boolean
-        , furtherDetail?: {} | {}): boolean {
+        , furtherDetail?: {} | {}
+        , last: string = 'info'): boolean {
         // log.info(`${type} ${NotificationEventType[eventType]} : ${result}`);
         let eventTypeString = NotificationEventType[eventType].toString().toLowerCase();
         console.log(`${type} eventType ${eventType} eventTypeString: ${eventTypeString}, result: ${result}, threshold: ${input.threshold}`);
@@ -163,8 +164,8 @@ export class BaseReporter extends EventEmitter implements Reporter {
             });
         }
         if (result) {
-            const data = { notification: 'alert', type, result, threshold: input.threshold, eventTypeString, furtherDetail };
             let isAlert = false;
+            const data = { notification: 'alert', type, result, threshold: input.threshold, eventTypeString, furtherDetail };
             if (input.threshold
                 && (!reverse ? (result >= input.threshold) : (result < input.threshold))
             ) {
@@ -175,8 +176,10 @@ export class BaseReporter extends EventEmitter implements Reporter {
                 // save only if this is an geniune alert
                 this.saveInDB(data);
             }
-            this.checkAndRaiseEvent(eventData);
-            return true;
+            if (isAlert || eventTypeString === last) {
+                this.checkAndRaiseEvent(eventData);
+            }
+            return isAlert;
         }
         return false;
     }

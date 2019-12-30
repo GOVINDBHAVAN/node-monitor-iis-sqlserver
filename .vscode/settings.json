@@ -27,6 +27,6 @@
         "**/dist": true,
         "**/tmp": true
     },
-    "window.zoomLevel": null,
+    "window.zoomLevel": 0.5,
     "terminal.integrated.fontSize": 13,
 }
