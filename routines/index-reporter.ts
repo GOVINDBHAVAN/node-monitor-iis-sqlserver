@@ -220,7 +220,7 @@ function sendEmail(data: any) {
     }
 
     if (exists && duration.minutes < emailNotificationDurationMinutes) {
-        console.log(`last ${type} email sent ${duration.minutes} minutes ago, no need to send now`);
+        console.log(`last ${type} email sent ${duration.minutes} minutes ago, delay duration is ${emailNotificationDurationMinutes} minutes, no need to send now`);
         return;
     }
     lastEmailSendDic[key] = now;
@@ -287,10 +287,8 @@ function sendEmail(data: any) {
     if (iis && iis.data) {
         // let requests = [{ "url": 'a', "time": "t", "alertType": "a" }
         //     , { "url": 'b', "time": "t2", "alertType": "ab" }];
-        let requests = _.orderBy(_.concat(iis.data.furtherDetail.danger, iis.data.furtherDetail.warning, iis.data.furtherDetail.info)
-            , r => {
-                r.timeSeconds
-            }, "desc");
+        let all = _.concat(iis.data.furtherDetail.danger, iis.data.furtherDetail.warning, iis.data.furtherDetail.info);
+        let requests = _.orderBy(all, ['timeSeconds'], ['desc']);
         let maxRequest = _.find(requests, r => {
             if (r.timeSeconds === iis.data.result) return r;
         });
