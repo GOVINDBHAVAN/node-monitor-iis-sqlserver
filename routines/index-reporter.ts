@@ -11,7 +11,7 @@ import moment from 'moment';
 import { OperatingSystemDetail } from './reporter';
 import { IISReporter } from './iis-reporter';
 import _ from 'lodash';
-import { Lock } from './lock';
+// import { Lock } from './lock';
 
 if (!isAdmin()) {
     console.log('Not running as administrator or root user.');
@@ -176,6 +176,8 @@ function isAvailable(types: string[], sample: any[]): { available: boolean, type
     }
     return result;
 }
+
+
 function sendEmail(data: any) {
     let type: string = data.data.type;
     let tagForKey = getTagForKey(type);
@@ -221,13 +223,14 @@ function sendEmail(data: any) {
         console.log(`last ${type} email sent ${duration.minutes} minutes ago, no need to send now`);
         return;
     }
+    lastEmailSendDic[key] = now;
     // console.log('data', data, type);
 
     // printTrace();
     console.log('tagForKey', tagForKey);
 
     // it is sending duplicate email
-    const lock = new Lock();
+    // const lock = new Lock();
 
     let dataForEmail = {};
     /*
@@ -265,7 +268,7 @@ function sendEmail(data: any) {
         || (chkMEM && !mem)
         || (chkDISK && !disk)) {
         // wait for all data available, then send single email.
-        lock.release();
+        // lock.release();
         return;
     }
 
@@ -277,7 +280,7 @@ function sendEmail(data: any) {
     if (chkDISK) sample.push(disk);
     let subjectType = isAvailable(['danger', 'warning', 'alert'], sample);
     if (!subjectType || !subjectType.available) {
-        lock.release();
+        // lock.release();
         log.error(`Error occured subject type not available`, sample);
         throw `Error occured subject type not available`;
     }
@@ -344,7 +347,7 @@ function sendEmail(data: any) {
             console.log(`${type} email sent on`, now);
             lastEmailSendDic[key] = now;
             emailDataForTag[tagForKey] = null; //clear old last data of different types (cpu,ram) as these are sent now.
-            lock.release();
+            // lock.release();
         })
         .catch(console.error);
 

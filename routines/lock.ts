@@ -3,38 +3,38 @@ const { EventEmitter } = require('events');
 //http://thecodebarbarian.com/mutual-exclusion-patterns-with-node-promises.html
 
 export class Lock {
-    _locked: boolean;
-    _ee: EventEmitter;
+    static _locked: boolean;
+    static _ee: EventEmitter;
     constructor() {
-        this._locked = false;
-        this._ee = new EventEmitter();
+        Lock._locked = false;
+        Lock._ee = new EventEmitter();
     }
 
     acquire() {
         return new Promise(resolve => {
             // If nobody has the lock, take it and resolve immediately
-            if (!this._locked) {
+            if (!Lock._locked) {
                 // Safe because JS doesn't interrupt you on synchronous operations,
                 // so no need for compare-and-swap or anything like that.
-                this._locked = true;
+                Lock._locked = true;
                 return resolve();
             }
 
             // Otherwise, wait until somebody releases the lock and try again
             const tryAcquire = () => {
-                if (!this._locked) {
-                    this._locked = true;
-                    this._ee.removeListener('release', tryAcquire);
+                if (!Lock._locked) {
+                    Lock._locked = true;
+                    Lock._ee.removeListener('release', tryAcquire);
                     return resolve();
                 }
             };
-            this._ee.on('release', tryAcquire);
+            Lock._ee.on('release', tryAcquire);
         });
     }
 
     release() {
         // Release the lock immediately
-        this._locked = false;
-        setImmediate(() => this._ee.emit('release'));
+        Lock._locked = false;
+        setImmediate(() => Lock._ee.emit('release'));
     }
 }
