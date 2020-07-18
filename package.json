@@ -24,7 +24,7 @@
     "app-root-path": "^3.0.0",
     "email-templates": "^6.0.6",
     "is-admin": "^3.0.0",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "moment": "^2.24.0",
     "node-json-db": "^1.0.2",
     "node-os-utils": "^1.1.0",
