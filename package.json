@@ -25,7 +25,7 @@
     "email-templates": "^6.0.6",
     "is-admin": "^3.0.0",
     "lodash": "^4.17.15",
-    "moment": "^2.24.0",
+    "moment": "^2.29.2",
     "node-json-db": "^1.0.2",
     "node-os-utils": "^1.1.0",
     "nodemailer": "^6.3.1",
